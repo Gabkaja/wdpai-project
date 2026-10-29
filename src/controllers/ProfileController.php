@@ -22,7 +22,7 @@ final class ProfileController extends AppController
                 'totalCards' => count($ownedIds),
                 'completion' => (int) round(count($ownedIds) / count($cards) * 100),
                 'rank' => 12,
-                'favoriteCard' => 'Mighty Pog',
+                'favoriteCard' => 'System Annihilator',
             ],
             'cards' => $cards,
             'ownedIds' => $ownedIds,
