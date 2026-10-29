@@ -967,3 +967,198 @@ main {
   font-size: var(--fs-lg);
   font-weight: 700;
 }
+
+/* 10. Breakpoints (mobile first)
+   -------------------------------------------------------------------------- */
+@media (min-width: 40rem) {
+  .button {
+    padding-inline: var(--space-lg);
+  }
+
+  .button__extra {
+    display: inline;
+  }
+
+  .avatar {
+    display: inline-flex;
+  }
+
+  .stream-banner__server {
+    display: flex;
+  }
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --page-gutter: 2rem;
+  }
+
+  .stream-banner__inner {
+    padding: var(--space-lg);
+  }
+
+  .site-footer__inner {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--space-md);
+    text-align: left;
+  }
+}
+
+@media (min-width: 64rem) {
+  .site-header__inner {
+    flex-wrap: nowrap;
+  }
+
+  .main-nav {
+    order: 0;
+    width: auto;
+    margin-right: auto;
+    margin-left: var(--space-lg);
+    padding: 0;
+    overflow: visible;
+  }
+
+  .header-tools {
+    flex-wrap: nowrap;
+    gap: var(--space-md);
+  }
+
+  .nav__link {
+    padding-block: var(--space-xs);
+  }
+
+  .stream-banner__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xl);
+  }
+
+  .stream-banner__stats {
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .catalog__controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .search {
+    flex: 1;
+  }
+
+  .pool-metric {
+    align-self: auto;
+  }
+}
+
+/* 11. Hover states
+   -------------------------------------------------------------------------- */
+.brand:hover {
+  color: var(--color-text-strong);
+}
+
+.nav__link:hover {
+  color: var(--color-text);
+  background: var(--color-surface-container);
+}
+
+.nav__link[aria-current="page"]:hover {
+  color: var(--color-brand);
+  background: var(--color-surface-high);
+}
+
+.lang-switch__button:hover {
+  color: var(--color-text);
+}
+
+.lang-switch__button[aria-pressed="true"]:hover {
+  color: var(--color-brand);
+}
+
+.icon-button:hover {
+  color: var(--color-brand);
+  background: var(--color-surface-container);
+}
+
+.avatar:hover {
+  box-shadow: 0 0 16px rgb(83 252 24 / 0.5);
+}
+
+.button--primary:hover {
+  box-shadow: var(--glow-brand-strong);
+  filter: brightness(1.1);
+}
+
+.button:active {
+  transform: scale(0.95);
+}
+
+.badge--channel:hover {
+  background: var(--color-surface-high);
+}
+
+.pill:hover {
+  color: var(--color-text);
+  background: var(--color-surface-high);
+}
+
+.pill[aria-pressed="true"]:hover {
+  color: var(--color-on-brand);
+  background: var(--color-brand);
+  filter: brightness(1.1);
+}
+
+.card:hover {
+  transform: translateY(-0.25rem);
+}
+
+.card:hover .card__icon {
+  transform: scale(1.1);
+}
+
+.search__input:focus {
+  background: var(--color-surface-high);
+}
+
+/* 12. Keyboard focus
+   Never remove the outline without a replacement.
+   -------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.card__link:focus-visible {
+  outline: none;
+}
+
+/* The card clips overflow, so its focus ring is drawn inside the card. */
+.card__link:focus-visible::after {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+/* 13. Reduced motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .pulse::after {
+    animation: none;
+  }
+
+  .card,
+  .card__icon,
+  .button {
+    transition: none;
+  }
+
+  .card:hover,
+  .card:hover .card__icon,
+  .button:active {
+    transform: none;
+  }
+}
