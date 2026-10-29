@@ -4,6 +4,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 RUN apk add --no-cache \
         zlib \
         libzip \
