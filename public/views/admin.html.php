@@ -33,7 +33,7 @@
                             <th scope="row"><?= (int) $card['id'] ?></th>
                             <td><?= htmlspecialchars($card['name']) ?></td>
                             <td><?= htmlspecialchars(ucfirst($card['rarity'])) ?></td>
-                            <td><?= (int) $card['dropChance'] ?>%</td>
+                            <td><?= number_format($card['dropChance'], 1) ?>%</td>
                             <td>
                                 <button type="button">Edit</button>
                                 <form method="post" action="/admin/cards/<?= (int) $card['id'] ?>/delete">
@@ -65,7 +65,7 @@
 
                     <div>
                         <label for="card-drop">Drop chance (%)</label>
-                        <input type="number" id="card-drop" name="drop_chance" min="0" max="100" required>
+                        <input type="number" id="card-drop" name="drop_chance" min="0" max="100" step="0.1" required>
                     </div>
 
                     <div>
