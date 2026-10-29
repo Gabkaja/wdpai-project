@@ -8,6 +8,7 @@ use App\Routing;
 use App\Controller\ProfileController;
 use App\Controller\LeaderboardController;
 use App\Controller\SecurityController;
+use App\Controller\AdminController;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -20,6 +21,7 @@ $routing->get('/profile', ProfileController::class, 'index');
 $routing->get('/leaderboard', LeaderboardController::class, 'index');
 $routing->get('/login', SecurityController::class, 'login');
 $routing->get('/register', SecurityController::class, 'register');
+$routing->get('/admin', AdminController::class, 'index');
 
 $routeFound = $routing->dispatch(
     $_SERVER['REQUEST_METHOD'],
