@@ -627,3 +627,343 @@ main {
   font-weight: 700;
   letter-spacing: 0.08em;
 }
+
+/* 8. Catalog controls
+   -------------------------------------------------------------------------- */
+.catalog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.catalog__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.search {
+  position: relative;
+  width: 100%;
+  max-width: 36rem;
+}
+
+.search__icon {
+  position: absolute;
+  top: 50%;
+  left: 0.875rem;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.search__input {
+  width: 100%;
+  padding: 0.625rem var(--space-md) 0.625rem 2.75rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  background: var(--color-surface-container);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  font-size: var(--fs-md);
+  line-height: 1.43;
+  appearance: none;
+  transition: background-color var(--transition);
+}
+
+.search__input::placeholder {
+  color: color-mix(in srgb, var(--color-text-muted) 75%, transparent);
+}
+
+.pool-metric {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0.625rem var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: var(--color-surface-lowest);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.33;
+  text-transform: uppercase;
+}
+
+.pool-metric .icon {
+  color: var(--color-brand);
+  font-size: 1.125rem;
+}
+
+.pool-metric strong {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.filters {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-xs);
+  overflow-x: auto;
+}
+
+.pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  padding: var(--space-sm) var(--space-md);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  background: var(--color-surface-container);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.33;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color var(--transition),
+    background-color var(--transition),
+    filter var(--transition);
+}
+
+.pill .icon {
+  font-size: 1rem;
+}
+
+.pill[aria-pressed="true"] {
+  color: var(--color-on-brand);
+  background: var(--color-brand);
+  box-shadow: var(--glow-brand);
+  font-weight: 700;
+}
+
+/* 9. Rarity variants and cards
+   Each rarity class only sets custom properties; components read them.
+   -------------------------------------------------------------------------- */
+.rarity-common {
+  --rarity: #94a3b8;
+  --rarity-accent: #94a3b8;
+  --rarity-media: #27354a;
+  --rarity-badge-bg: #334155;
+  --rarity-badge-text: #cbd5e1;
+  --rarity-icon-glow: inset 0 2px 4px rgb(0 0 0 / 0.35);
+}
+
+.rarity-rare {
+  --rarity: #3b82f6;
+  --rarity-accent: #60a5fa;
+  --rarity-media: #142340;
+  --rarity-badge-bg: #1e3a8a;
+  --rarity-badge-text: #93c5fd;
+  --rarity-icon-glow: 0 0 12px rgb(59 130 246 / 0.3);
+  --rarity-dot-glow: 0 0 6px rgb(59 130 246 / 0.6);
+}
+
+.rarity-epic {
+  --rarity: #a855f7;
+  --rarity-accent: #c084fc;
+  --rarity-media: #2b173e;
+  --rarity-badge-bg: #581c87;
+  --rarity-badge-text: #e9d5ff;
+  --rarity-icon-glow: 0 0 16px rgb(168 85 247 / 0.35);
+  --rarity-dot-glow: 0 0 6px rgb(168 85 247 / 0.6);
+}
+
+.rarity-legendary {
+  --rarity: #ffb300;
+  --rarity-accent: #fde047;
+  --rarity-media: #38260c;
+  --rarity-badge-bg: #78350f;
+  --rarity-badge-text: #fef08a;
+  --rarity-icon-glow: 0 0 20px rgb(255 179 0 / 0.5);
+  --rarity-dot-glow: 0 0 8px rgb(255 179 0 / 0.8);
+  --rarity-badge-glow: 0 0 8px rgb(255 179 0 / 0.4);
+  --rarity-card-shadow: 0 0 18px rgb(255 179 0 / 0.22);
+}
+
+.dot--rarity {
+  background: var(--rarity);
+  box-shadow: var(--rarity-dot-glow, none);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: var(--space-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card-grid > li {
+  display: flex;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  box-shadow: var(--rarity-card-shadow, var(--shadow-card));
+  transition: transform var(--transition-slow);
+}
+
+.card__media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 11rem;
+  overflow: hidden;
+  background: var(--rarity-media);
+}
+
+.card__media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, rgb(30 41 59 / 0.7));
+  pointer-events: none;
+}
+
+.card__code {
+  position: absolute;
+  top: 0.625rem;
+  left: 0.625rem;
+  padding: 0.125rem var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--rarity-accent);
+  background: rgb(15 23 42 / 0.8);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-lg);
+  color: var(--rarity);
+  background: var(--color-card);
+  box-shadow: var(--rarity-icon-glow);
+  transition: transform var(--transition-slow);
+}
+
+.card__icon .icon {
+  font-size: 2.25rem;
+}
+
+.card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.card__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.card__title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__link {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* The link is stretched over the whole card, so the entire card is clickable. */
+.card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+}
+
+.rarity-badge {
+  flex-shrink: 0;
+  padding: 0.125rem var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--rarity-badge-text);
+  background: var(--rarity-badge-bg);
+  box-shadow: var(--rarity-badge-glow, none);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card__description {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.33;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.card__drop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: rgb(6 14 32 / 0.5);
+}
+
+.card__drop-label {
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card__drop-value {
+  color: var(--color-brand);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}

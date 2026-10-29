@@ -10,6 +10,8 @@ final class DefaultController extends AppController
 {
     public function index(): void
     {
+        $cards = (new CardRepository())->all();
+
         $this->render('home', [
             'pageTitle' => 'StreamRip – Card Catalog',
             'stream' => [
@@ -22,7 +24,9 @@ final class DefaultController extends AppController
                 'viewers' => 1420,
                 'server' => 'EU-Warsaw • Sync Pool #184',
             ],
-            'cards' => (new CardRepository())->all(),
+            'cards' => $cards,
+            'rarities' => ['common', 'rare', 'epic', 'legendary'],
+            'rarityCounts' => array_count_values(array_column($cards, 'rarity')),
         ]);
     }
 

@@ -57,8 +57,35 @@
             </div>
         </section>
 
-        <section aria-labelledby="catalog-heading">
+                <section class="catalog" aria-labelledby="catalog-heading">
             <h2 id="catalog-heading" class="visually-hidden">Browse all cards</h2>
+
+            <div class="catalog__controls">
+                <form class="search" role="search" action="/" method="get">
+                    <label class="visually-hidden" for="card-search">Search cards by name or description</label>
+                    <span class="icon search__icon" aria-hidden="true">search</span>
+                    <input class="search__input" type="search" id="card-search" name="q" placeholder="Search cards by name or description...">
+                </form>
+
+                <p class="pool-metric">
+                    <span class="icon" aria-hidden="true">inventory_2</span>
+                    <span>Active cards in the current drop: <strong><?= count($cards) ?> cards</strong></span>
+                </p>
+            </div>
+
+            <div class="filters" role="group" aria-label="Filter cards by rarity">
+                <button class="pill" type="button" aria-pressed="true">
+                    <span class="icon" aria-hidden="true">apps</span>
+                    All (<?= count($cards) ?>)
+                </button>
+                <?php foreach ($rarities as $rarity): ?>
+                    <button class="pill" type="button" aria-pressed="false">
+                        <span class="dot dot--rarity rarity-<?= htmlspecialchars($rarity) ?>" aria-hidden="true"></span>
+                        <?= htmlspecialchars(ucfirst($rarity)) ?> (<?= (int) ($rarityCounts[$rarity] ?? 0) ?>)
+                    </button>
+                <?php endforeach; ?>
+            </div>
+
             <?php $this->partial('card-list', ['cards' => $cards]); ?>
         </section>
     </main>
