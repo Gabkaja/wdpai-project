@@ -10,7 +10,7 @@
                 <dt>Rarity</dt>
                 <dd><?= htmlspecialchars(ucfirst($card['rarity'])) ?></dd>
                 <dt>Drop chance</dt>
-                <dd><?= (int) $card['dropChance'] ?>%</dd>
+                <dd><?= number_format($card['dropChance'], 1) ?>%</dd>
             </dl>
             <a href="/cards">Back to all cards</a>
         </article>
