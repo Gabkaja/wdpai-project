@@ -12,9 +12,17 @@ final class DefaultController extends AppController
     {
         $this->render('home', [
             'pageTitle' => 'StreamRip – Card Catalog',
+            'stream' => [
+                'isLive' => true,
+                'title' => 'HUGE TCG CARD OPENING EDITION 1! 🔥 DROPPING LEGENDARIES FOR VIEWERS',
+                'channel' => 'kick.com/StreamRipOfficial',
+                'channelUrl' => 'https://kick.com/StreamRipOfficial',
+                'category' => 'TCG / Card Opening • Season 1',
+                'chatStatus' => 'Active',
+                'viewers' => 1420,
+                'server' => 'EU-Warsaw • Sync Pool #184',
+            ],
             'cards' => (new CardRepository())->all(),
-            'isLive' => false,
-            'channelUrl' => 'https://kick.com/ripify68',
         ]);
     }
 
