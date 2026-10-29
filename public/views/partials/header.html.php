@@ -13,6 +13,11 @@
             <ul>
                 <li><a href="/">Home</a></li>
                 <li><a href="/cards">All cards</a></li>
+                <li><a href="/leaderboard">Leaderboard</a></li>
+                <li><a href="/profile">Profile</a></li>
+                <li><a href="/admin">Admin</a></li>
+                <li><a href="/login">Log in</a></li>
+                <li><a href="/register">Register</a></li>
             </ul>
         </nav>
 
