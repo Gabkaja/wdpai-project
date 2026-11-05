@@ -347,6 +347,12 @@ main {
   box-shadow: var(--glow-brand);
 }
 
+.button--secondary {
+  color: var(--color-text);
+  background: var(--color-surface-high);
+  box-shadow: inset 0 0 0 1px rgb(218 226 253 / 0.15);
+}
+
 .button__extra {
   display: none;
 }
@@ -968,7 +974,125 @@ main {
   font-weight: 700;
 }
 
-/* 10. Breakpoints (mobile first)
+/* 10. Error page
+   -------------------------------------------------------------------------- */
+.error-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-page__panel {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 40rem;
+  padding: var(--space-xl) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-low);
+  box-shadow: var(--shadow-banner);
+  text-align: center;
+}
+
+.error-page__panel::before,
+.error-page__panel::after {
+  content: "";
+  position: absolute;
+  width: 20rem;
+  height: 20rem;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.error-page__panel::before {
+  top: -8rem;
+  left: -8rem;
+  background: rgb(83 252 24 / 0.1);
+  filter: blur(110px);
+}
+
+.error-page__panel::after {
+  right: -8rem;
+  bottom: -8rem;
+  background: rgb(5 102 217 / 0.15);
+  filter: blur(120px);
+}
+
+.error-page__icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  color: var(--color-brand);
+  background: var(--color-surface-container);
+  box-shadow: var(--glow-brand-soft);
+  font-size: 2rem;
+}
+
+.error-page__code {
+  position: relative;
+  z-index: 1;
+  margin: var(--space-md) 0 0;
+  color: var(--color-brand);
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 12vw, 7rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-shadow: var(--glow-brand-strong);
+}
+
+.error-page__title {
+  position: relative;
+  z-index: 1;
+  margin: var(--space-sm) 0 0;
+  color: var(--color-text-strong);
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+}
+
+.error-page__text {
+  position: relative;
+  z-index: 1;
+  max-width: 32rem;
+  margin: var(--space-sm) auto 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+}
+
+.error-page__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.error-page__hint {
+  position: relative;
+  z-index: 1;
+  margin: var(--space-lg) 0 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.error-page__hint strong {
+  color: var(--color-text);
+}
+
+/* 11. Breakpoints (mobile first)
    -------------------------------------------------------------------------- */
 @media (min-width: 40rem) {
   .button {
@@ -1056,7 +1180,7 @@ main {
   }
 }
 
-/* 11. Hover states
+/* 12. Hover states
    -------------------------------------------------------------------------- */
 .brand:hover {
   color: var(--color-text-strong);
@@ -1094,6 +1218,11 @@ main {
   filter: brightness(1.1);
 }
 
+.button--secondary:hover {
+  background: var(--color-surface-container);
+  box-shadow: inset 0 0 0 1px rgb(218 226 253 / 0.3);
+}
+
 .button:active {
   transform: scale(0.95);
 }
@@ -1125,7 +1254,7 @@ main {
   background: var(--color-surface-high);
 }
 
-/* 12. Keyboard focus
+/* 13. Keyboard focus
    Never remove the outline without a replacement.
    -------------------------------------------------------------------------- */
 :focus-visible {
@@ -1143,7 +1272,7 @@ main {
   outline-offset: -3px;
 }
 
-/* 13. Reduced motion
+/* 14. Reduced motion
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .pulse::after {
