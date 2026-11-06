@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main>
         <article data-rarity="<?= htmlspecialchars($card['rarity']) ?>">
             <h1><?= htmlspecialchars($card['name']) ?></h1>
@@ -15,5 +13,3 @@
             <a href="/cards">Back to all cards</a>
         </article>
     </main>
-
-<?php $this->partial('footer'); ?>

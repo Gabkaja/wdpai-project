@@ -7,5 +7,3 @@
             <p class="site-footer__copy">&copy; 2026 StreamRip. All rights reserved.</p>
         </div>
     </footer>
-</body>
-</html>

@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main>
         <h1>Create account</h1>
 
@@ -30,5 +28,3 @@
 
         <p>Already have an account? <a href="/login">Log in</a>.</p>
     </main>
-
-<?php $this->partial('footer'); ?>

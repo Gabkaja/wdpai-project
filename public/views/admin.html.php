@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <aside>
         <nav aria-label="Admin sections">
             <ul>
@@ -154,5 +152,3 @@
             </dl>
         </section>
     </main>
-
-<?php $this->partial('footer'); ?>
