@@ -6,12 +6,23 @@ namespace App\Controller;
 
 abstract class AppController
 {
-    protected function render(string $template, array $variables = []): void
+    protected function render(string $template, array $variables = [], ?string $layout = 'layout'): void
     {
         $templatePath = $this->viewPath($template);
 
         extract($variables, EXTR_SKIP);
+
+        if ($layout === null) {
+            require $templatePath;
+
+            return;
+        }
+
+        ob_start();
         require $templatePath;
+        $content = (string) ob_get_clean();
+
+        require $this->viewPath($layout);
     }
 
     protected function partial(string $name, array $variables = []): void

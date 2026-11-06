@@ -55,6 +55,6 @@ final class OverlayController extends AppController
                 'legendaries' => 6,
             ],
             'channel' => 'kick.com/streamrip',
-        ]);
+        ], null);
     }
 }

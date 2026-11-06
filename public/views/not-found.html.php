@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main class="error-page">
         <section class="error-page__panel" aria-labelledby="error-title">
             <span class="error-page__icon icon" aria-hidden="true">signal_disconnected</span>
@@ -19,5 +17,3 @@
             <p class="error-page__hint">Error code: <strong>404 &ndash; Not Found</strong></p>
         </section>
     </main>
-
-<?php $this->partial('footer'); ?>

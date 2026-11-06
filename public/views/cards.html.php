@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main>
         <h1>All cards</h1>
 
@@ -8,5 +6,3 @@
             <?php $this->partial('card-list', ['cards' => $cards]); ?>
         </section>
     </main>
-
-<?php $this->partial('footer'); ?>

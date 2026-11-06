@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main class="stack">
         <section class="stream-banner" aria-labelledby="about-title">
             <div class="stream-banner__inner">
@@ -80,5 +78,3 @@
             </p>
         </section>
     </main>
-
-<?php $this->partial('footer'); ?>

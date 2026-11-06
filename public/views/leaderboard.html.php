@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main>
         <h1>Leaderboard</h1>
 
@@ -64,5 +62,3 @@
             </nav>
         </section>
     </main>
-
-<?php $this->partial('footer'); ?>

@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main class="stack">
         <h1 class="visually-hidden">StreamRip card catalog</h1>
 
@@ -89,5 +87,3 @@
             <?php $this->partial('card-list', ['cards' => $cards]); ?>
         </section>
     </main>
-
-<?php $this->partial('footer'); ?>

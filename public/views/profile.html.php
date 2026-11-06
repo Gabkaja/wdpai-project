@@ -1,5 +1,3 @@
-<?php $this->partial('header', ['pageTitle' => $pageTitle]); ?>
-
     <main>
         <h1>Profile of <?= htmlspecialchars($username) ?></h1>
 
@@ -59,5 +57,3 @@
             <p role="status" aria-live="polite"></p>
         </section>
     </main>
-
-<?php $this->partial('footer'); ?>
