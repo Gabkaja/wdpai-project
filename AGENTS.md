@@ -36,7 +36,8 @@ docker compose exec php composer dump-autoload
 ```
 public/index.php              # front controller — jedyny punkt wejścia HTTP
 public/css/style.css          # style
-public/views/*.html.php       # widoki (pełne strony)
+public/views/*.html.php       # widoki (fragmenty treści wstawiane do layoutu)
+public/views/layout.html.php  # wspólny layout (header, content, footer)
 public/views/partials/*.php   # partiale: header, footer, card-list
 src/Routing.php               # router (rejestracja + dispatch)
 src/controllers/              # kontrolery (namespace App\Controller)
@@ -56,6 +57,10 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
   inaczej `RuntimeException`). Klasy są `final`, akcje zwracają `void`.
 - **Dane** przekazuje się do widoku wyłącznie przez `$this->render('nazwa', [...])`.
   Klucze tablicy stają się zmiennymi w widoku (`extract`).
+- **Layout**: `render()` domyślnie wstawia widok do `public/views/layout.html.php`
+  (jako `$content`); layout sam wywołuje partiale `header` i `footer`. Widoki nie
+  wywołują ich samodzielnie. Pełną stronę bez layoutu renderuje się przez
+  `$this->render(..., null)` (np. `/overlay`).
 - **Partiale** wywołuje się przez `$this->partial('nazwa', [...])`; trafiają do
   `public/views/partials/`.
 - **Escaping**: każdy tekst z danych wstawiaj przez `htmlspecialchars(...)`.
@@ -70,11 +75,12 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 
 ## Konwencje kodu
 
+- **Nie dodawaj frameworków ani zależności bez zgody.**
 - `declare(strict_types=1);` w każdym pliku PHP.
 - Typy parametrów i wartości zwracanych zawsze jawnie.
 - Wcięcie 4 spacje, otwierający `{` w nowej linii dla klas/metod.
-- Identyfikatory, komentarze w kodzie i treści UI po angielsku; komunikacja z
-  użytkownikiem i dokumentacja po polsku.
+- Identyfikatory, komentarze w kodzie, treści UI, dokumentacja i commity po
+  angielsku; komunikacja z użytkownikiem po polsku.
 - **Nie dodawaj komentarzy** do kodu, chyba że zostaniesz o to poproszony.
 - Klasy domenowe/Repository jako `final`; brak dziedziczenia poza `AppController`.
 - HTML: semantyczny, dostępny (`aria-*`, `role`), nazwy klas w BEM
@@ -88,8 +94,6 @@ Nie traktuj poniższych jako błędów do „naprawienia” bez polecenia:
   ich wysłanie daje 404. To celowe placeholdery.
 - Brak bazy danych — `CardRepository` to dane w pamięci (świadome, tymczasowe).
 - Routing obsługuje tylko parametry numeryczne (świadome, tymczasowe).
-- Wspólny layout ma powstać w przyszłości; obecnie każdy widok jawnie wywołuje
-  `partial('header')` i `partial('footer')`.
 - Sesje/uwierzytelnianie są planowane; obecnie `/admin` i `/profile` są publiczne.
 - Katalog `src/controllers` (mała litera) odbiega od PSR-4 (`src/Controller`) i działa
   dzięki osobnemu mapowaniu w `composer.json`. Zmiana nazwy jest planowana, ale
@@ -110,5 +114,6 @@ Jeśli dodasz narzędzia (PHPUnit, PHPStan, linter) — zaktualizuj tę sekcję.
 
 - Nie commituj, nie pushuj i nie twórz PR bez wyraźnego polecenia.
 - Branch dla każdej funkcji; małe, logiczne commity.
-- Commity: `feat: krótki opis` — nie dodawaj zakresu w nawiasach (`feat(theme):`).
+- Commity po angielsku: `feat: short description` — nie dodawaj zakresu w nawiasach
+  (`feat(theme):`).
 - Sekrety wyłącznie w `.env` (poza repozytorium).
