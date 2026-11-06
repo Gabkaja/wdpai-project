@@ -27,6 +27,7 @@ $isCurrent = static function (string $href) use ($currentPath): bool {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@600;700;800&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&amp;display=block" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js" defer></script>
 </head>
 <body>
     <header class="site-header">
