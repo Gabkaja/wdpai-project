@@ -10,6 +10,7 @@ use App\Controller\ProfileController;
 use App\Controller\LeaderboardController;
 use App\Controller\SecurityController;
 use App\Controller\AdminController;
+use App\Controller\OverlayController;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -24,6 +25,7 @@ $routing->get('/leaderboard', LeaderboardController::class, 'index');
 $routing->get('/login', SecurityController::class, 'login');
 $routing->get('/register', SecurityController::class, 'register');
 $routing->get('/admin', AdminController::class, 'index');
+$routing->get('/overlay', OverlayController::class, 'index');
 
 $routeFound = $routing->dispatch(
     $_SERVER['REQUEST_METHOD'],
