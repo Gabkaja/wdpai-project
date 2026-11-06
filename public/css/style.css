@@ -21,6 +21,8 @@
   --color-card-drop: rgb(6 14 32 / 0.5);
   --color-glow-brand-10: rgb(83 252 24 / 0.1);
   --color-glow-blue-15: rgb(5 102 217 / 0.15);
+  --color-border: rgb(218 226 253 / 0.2);
+  --color-scrollbar-thumb: rgb(218 226 253 / 0.3);
 
   /* Text */
   --color-text: #dae2fd;
@@ -33,6 +35,7 @@
   --color-on-primary: #0b3900;
   --color-sync: #d8e2ff;
   --color-focus: color-mix(in srgb, var(--color-brand) 45%, white);
+  --color-placeholder: color-mix(in srgb, var(--color-text-muted) 75%, transparent);
 
   /* Glows and shadows */
   --glow-brand: 0 0 16px rgb(83 252 24 / 0.35);
@@ -50,6 +53,7 @@
   --shadow-pulse: 0 0 8px var(--color-brand);
   --shadow-inset-15: inset 0 0 0 1px rgb(218 226 253 / 0.15);
   --shadow-inset-30: inset 0 0 0 1px rgb(218 226 253 / 0.3);
+  --shadow-autofill: inset 0 0 0 1000px var(--color-surface-container);
 
   /* Typography */
   --font-body: "Inter", system-ui, sans-serif;
@@ -116,6 +120,7 @@
   --blur-decor: 110px;
   --blur-decor-strong: 120px;
   --focus-ring: 3px;
+  --border-width: 1px;
 
   /* Radius */
   --radius-sm: 0.25rem;
@@ -140,6 +145,54 @@
   --brightness-hover: 1.1;
 }
 
+/* 1a. Light theme
+   -------------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-background: #f6f8fb;
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #eef2f8;
+  --color-surface-container: #e5ebf5;
+  --color-surface-high: #d8e1ee;
+  --color-card: #ffffff;
+  --color-header: rgb(246 248 251 / 0.9);
+  --color-stats: rgb(255 255 255 / 0.85);
+  --color-card-code: rgb(15 23 42 / 0.8);
+  --color-card-fade: rgb(255 255 255 / 0.75);
+  --color-card-drop: rgb(241 245 249 / 0.9);
+  --color-glow-brand-10: rgb(31 102 0 / 0.12);
+  --color-glow-blue-15: rgb(5 102 217 / 0.1);
+  --color-border: rgb(15 23 42 / 0.2);
+  --color-scrollbar-thumb: rgb(15 23 42 / 0.3);
+
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-strong: #020617;
+
+  --color-brand: #1f6600;
+  --color-on-brand: #ffffff;
+  --color-on-primary: #ffffff;
+  --color-sync: #2563eb;
+  --color-focus: color-mix(in srgb, var(--color-brand) 80%, black);
+
+  --glow-brand: 0 0 16px rgb(31 102 0 / 0.25);
+  --glow-brand-strong: 0 0 24px rgb(31 102 0 / 0.35);
+  --glow-brand-soft: 0 0 12px rgb(31 102 0 / 0.12);
+  --shadow-header: 0 1px 8px rgb(15 23 42 / 0.12);
+  --shadow-banner: 0 12px 36px rgb(15 23 42 / 0.15);
+  --shadow-card: 0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.1);
+  --shadow-input: 0 1px 2px rgb(15 23 42 / 0.1);
+  --shadow-accent-20: 0 0 10px rgb(31 102 0 / 0.15);
+  --shadow-accent-25: 0 0 8px rgb(31 102 0 / 0.18);
+  --shadow-accent-30: 0 0 10px rgb(31 102 0 / 0.22);
+  --shadow-accent-35: 0 0 12px rgb(31 102 0 / 0.25);
+  --shadow-accent-50: 0 0 16px rgb(31 102 0 / 0.35);
+  --shadow-pulse: 0 0 8px rgb(31 102 0 / 0.55);
+  --shadow-inset-15: inset 0 0 0 1px rgb(15 23 42 / 0.15);
+  --shadow-inset-30: inset 0 0 0 1px rgb(15 23 42 / 0.3);
+}
+
 /* 2. Reset and base
    -------------------------------------------------------------------------- */
 *,
@@ -150,6 +203,7 @@
 
 html {
   color-scheme: dark;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-background);
 }
 
 body {
@@ -176,6 +230,79 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+label {
+  display: inline-block;
+  margin-bottom: var(--space-xs);
+  color: var(--color-text);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+input:where(:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="color"])),
+select,
+textarea {
+  width: 100%;
+  padding: var(--space-sm-3) var(--space-md);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  background: var(--color-surface-container);
+  font: inherit;
+  font-size: var(--fs-md);
+  line-height: var(--line-input);
+  transition:
+    border-color var(--transition),
+    background-color var(--transition);
+}
+
+input:where(:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="color"])):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-brand);
+  background: var(--color-surface-high);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  accent-color: var(--color-brand);
+}
+
+input[type="file"] {
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-on-brand);
+  background: var(--color-brand);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button:hover {
+  filter: brightness(var(--brightness-hover));
+}
+
+::placeholder {
+  color: var(--color-placeholder);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-text);
+  box-shadow: var(--shadow-autofill);
+  caret-color: var(--color-text);
 }
 
 a:where(:not([class])) {
@@ -754,7 +881,7 @@ main {
 }
 
 .search__input::placeholder {
-  color: color-mix(in srgb, var(--color-text-muted) 75%, transparent);
+  color: var(--color-placeholder);
 }
 
 .pool-metric {
@@ -1356,7 +1483,17 @@ main {
 
   .card,
   .card__icon,
-  .button {
+  .button,
+  .nav__link,
+  .lang-switch__button,
+  .icon-button,
+  .avatar,
+  .badge,
+  .pill,
+  .search__input,
+  input,
+  select,
+  textarea {
     transition: none;
   }
 
