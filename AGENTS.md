@@ -114,6 +114,9 @@ Jeśli dodasz narzędzia (PHPUnit, PHPStan, linter) — zaktualizuj tę sekcję.
 
 - Nie commituj, nie pushuj i nie twórz PR bez wyraźnego polecenia.
 - Branch dla każdej funkcji; małe, logiczne commity.
+- Łącz branch z `main` merge commitem (`git merge --no-ff`); nie używaj
+  fast-forward przy merge'u funkcji.
+- Nie usuwaj branchy po merge'u — mają zostać w repozytorium.
 - Commity po angielsku: `feat: short description` — nie dodawaj zakresu w nawiasach
   (`feat(theme):`).
 - Sekrety wyłącznie w `.env` (poza repozytorium).
