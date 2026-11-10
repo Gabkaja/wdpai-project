@@ -71,8 +71,10 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 - **Dane źródłowe**: karty, ranking i dane panelu admina pochodzą z PostgreSQL przez `App\Repository\*`. Dane `/profile` pozostają lokalnie w kontrolerze do czasu wdrożenia sesji.
 - **404**: brak trasy obsługuje `public/index.php` (`dispatch()` zwraca `false` →
   `DefaultController::notFound()`). `CardController::show()` sam ustawia 404, gdy
-  karta nie istnieje. Utrzymuj ten wzorzec, dopóki nie powstanie centralna obsługa
-  wyjątków.
+  karta nie istnieje. Nieobsłużony wyjątek jest łapany w `public/index.php`,
+  logowany do `system_logs` przez `LogRepository::add()` (z fallbackiem na
+  `error_log()`), a użytkownik widzi stronę 500 przez
+  `DefaultController::serverError()`.
 
 ## Baza danych (PostgreSQL)
 

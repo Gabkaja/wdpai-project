@@ -56,4 +56,11 @@ final class DefaultController extends AppController
             'pageTitle' => 'Page not found – StreamRip',
         ]);
     }
+
+    public function serverError(): void
+    {
+        $this->render('500', [
+            'pageTitle' => 'Server error – StreamRip',
+        ]);
+    }
 }

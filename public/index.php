@@ -11,6 +11,7 @@ use App\Controller\LeaderboardController;
 use App\Controller\SecurityController;
 use App\Controller\AdminController;
 use App\Controller\OverlayController;
+use App\Repository\LogRepository;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -27,12 +28,36 @@ $routing->get('/register', SecurityController::class, 'register');
 $routing->get('/admin', AdminController::class, 'index');
 $routing->get('/overlay', OverlayController::class, 'index');
 
-$routeFound = $routing->dispatch(
-    $_SERVER['REQUEST_METHOD'],
-    $_SERVER['REQUEST_URI'],
-);
+try {
+    $routeFound = $routing->dispatch(
+        $_SERVER['REQUEST_METHOD'],
+        $_SERVER['REQUEST_URI'],
+    );
 
-if (!$routeFound) {
-    http_response_code(404);
-    (new DefaultController())->notFound();
+    if (!$routeFound) {
+        http_response_code(404);
+        (new DefaultController())->notFound();
+    }
+} catch (\Throwable $exception) {
+    try {
+        $pdo = (new App\Database())->connect();
+        $logRepository = new LogRepository($pdo);
+
+        $logRepository->add(
+            'error',
+            $exception->getMessage(),
+            [
+                'class' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+                'uri' => $_SERVER['REQUEST_URI'] ?? '',
+            ]
+        );
+    } catch (\Throwable $loggingException) {
+        error_log($loggingException->getMessage());
+    }
+
+    http_response_code(500);
+    (new DefaultController())->serverError();
 }

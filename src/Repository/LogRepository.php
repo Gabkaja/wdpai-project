@@ -38,4 +38,22 @@ final class LogRepository
 
         return $logs;
     }
+
+    public function add(string $level, string $message, ?array $context = null, ?int $userId = null): void
+    {
+        $contextJson = null;
+
+        if ($context !== null) {
+            $contextJson = json_encode($context, JSON_THROW_ON_ERROR);
+        }
+
+        $statement = $this->pdo->prepare('INSERT INTO system_logs (level, message, context, user_id) VALUES (:level, :message, CAST(:context AS JSONB), :user_id)');
+
+        $statement->bindValue(':level', $level, PDO::PARAM_STR);
+        $statement->bindValue(':message', $message, PDO::PARAM_STR);
+        $statement->bindValue(':context', $contextJson, $contextJson === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $statement->bindValue(':user_id', $userId, $userId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+
+        $statement->execute();
+    }
 }
