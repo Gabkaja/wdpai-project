@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Database;
 use App\Repository\CardRepository;
 
 final class AboutController extends AppController
 {
     public function index(): void
     {
+        $pdo = (new Database())->connect();
         $this->render('about', [
             'pageTitle' => 'About – StreamRip',
             'edition' => 'Season 1 • EU-Warsaw sync pool',
-            'cardCount' => count((new CardRepository())->all()),
+            'cardCount' => count((new CardRepository($pdo))->all()),
             'features' => [
                 [
                     'icon' => 'sensors',
