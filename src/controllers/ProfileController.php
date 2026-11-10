@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Database;
 use App\Repository\CardRepository;
 
 final class ProfileController extends AppController
@@ -12,7 +13,8 @@ final class ProfileController extends AppController
 
     public function index(): void
     {
-        $cards = (new CardRepository())->all();
+        $pdo = (new Database())->connect();
+        $cards = (new CardRepository($pdo))->all();
         $ownedIds = self::OWNED_CARD_IDS;
 
         $this->render('profile', [

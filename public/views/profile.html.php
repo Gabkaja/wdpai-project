@@ -203,26 +203,26 @@
 
                 <ul class="collection-grid" role="list">
                     <?php foreach ($cards as $card): ?>
-                        <?php $isOwned = in_array($card['id'], $ownedIds, true); ?>
+                        <?php $isOwned = in_array($card->getId(), $ownedIds, true); ?>
                         <li>
                             <?php if ($isOwned): ?>
-                                <article class="collection-card rarity-<?= htmlspecialchars($card['rarity']) ?>">
+                                    <article class="collection-card rarity-<?= htmlspecialchars($card->getRarityCode()) ?>">
                                     <div class="collection-card__media">
-                                        <span class="collection-card__code">#<?= htmlspecialchars($card['code']) ?></span>
+                                        <span class="collection-card__code">#<?= htmlspecialchars($card->getCode()) ?></span>
                                         <span class="collection-card__owned">1x owned</span>
                                         <span class="collection-card__icon">
-                                            <span class="icon" aria-hidden="true"><?= htmlspecialchars($card['icon']) ?></span>
+                                            <span class="icon" aria-hidden="true"><?= htmlspecialchars($card->getIcon()) ?></span>
                                         </span>
-                                        <span class="collection-card__mint">Mint <?= htmlspecialchars($mintGrades[$card['rarity']] ?? '—') ?></span>
+                                        <span class="collection-card__mint">Mint <?= htmlspecialchars($mintGrades[$card->getRarityCode()] ?? '—') ?></span>
                                     </div>
                                     <div class="collection-card__body">
-                                        <span class="collection-card__rarity"><?= htmlspecialchars(ucfirst($card['rarity'])) ?></span>
-                                        <h3 class="collection-card__name">
-                                            <a href="/cards/<?= (int) $card['id'] ?>"><?= htmlspecialchars($card['name']) ?></a>
+                                        <span class="collection-card__rarity"><?= htmlspecialchars(ucfirst($card->getRarityCode())) ?></span>
+                                            <h3 class="collection-card__name">
+                                                <a href="/cards/<?= (int) $card->getId() ?>"><?= htmlspecialchars($card->getName()) ?></a>
                                         </h3>
                                         <div class="collection-card__footer">
-                                            <span>Rarity: <?= htmlspecialchars(ucfirst($card['rarity'])) ?></span>
-                                            <a class="collection-card__view" href="/cards/<?= (int) $card['id'] ?>">
+                                            <span>Rarity: <?= htmlspecialchars(ucfirst($card->getRarityCode())) ?></span>
+                                            <a class="collection-card__view" href="/cards/<?= (int) $card->getId() ?>">
                                                 <span class="icon" aria-hidden="true">visibility</span>
                                                 View
                                             </a>
@@ -232,7 +232,7 @@
                             <?php else: ?>
                                 <article class="collection-card collection-card--locked" aria-label="Locked card">
                                     <div class="collection-card__media">
-                                        <span class="collection-card__code">Locked (#<?= htmlspecialchars($card['code']) ?>)</span>
+                                        <span class="collection-card__code">Locked (#<?= htmlspecialchars($card->getCode()) ?>)</span>
                                         <span class="icon" aria-hidden="true">lock</span>
                                     </div>
                                     <div class="collection-card__body">
