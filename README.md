@@ -9,10 +9,10 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 |---|---|
 | Home | Stream banner, live stats and a card catalog with rarity filters |
 | Card catalog | All cards (`/cards`) and card details (`/cards/{id}`) |
-| Profile | Collection stats, owned cards, avatar upload and promo code forms |
+| Profile | Collection stats and owned cards (requires login); avatar upload and promo code forms have no POST routes yet |
 | Leaderboard | Podium and the full collector ranking |
-| Admin panel | Card list, users and roles, system logs, cleanup schedule |
-| Login / register | Form views only (no backend yet — see "Project status") |
+| Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
+| Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
 | About | Project information and how it works (`/about`) |
 | 404 | Consistent error screen for unknown routes and missing cards |
 
@@ -72,6 +72,7 @@ src/controllers/              # controllers (App\Controller namespace)
 src/Model/                    # data models (App\Model namespace)
 src/Repository/               # data sources (App\Repository namespace)
 src/Database.php              # PDO connection factory
+src/Session.php               # native PHP session management (start, login, logout, CSRF)
 database/                     # numbered SQL scripts (schema, views, seed data)
 docker/                       # nginx, php and db configuration
 ```
@@ -101,30 +102,79 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 
 ## Routing
 
-| Method | Path | Action |
-|---|---|---|
-| GET | `/` | `DefaultController::index` |
-| GET | `/about` | `AboutController::index` |
-| GET | `/cards` | `CardController::index` |
-| GET | `/cards/{id}` | `CardController::show` |
-| GET | `/profile` | `ProfileController::index` |
-| GET | `/leaderboard` | `LeaderboardController::index` |
-| GET | `/login` | `SecurityController::login` |
-| GET | `/register` | `SecurityController::register` |
-| GET | `/admin` | `AdminController::index` |
+| Method | Path | Access | Action |
+|---|---|---|---|
+| GET | `/` | public | `DefaultController::index` |
+| GET | `/about` | public | `AboutController::index` |
+| GET | `/cards` | public | `CardController::index` |
+| GET | `/cards/{id}` | public | `CardController::show` |
+| GET | `/profile` | logged in | `ProfileController::index` |
+| GET | `/leaderboard` | public | `LeaderboardController::index` |
+| GET | `/login` | public | `SecurityController::login` |
+| POST | `/login` | public | `SecurityController::loginSubmit` |
+| GET | `/register` | public | `SecurityController::register` |
+| POST | `/register` | public | `SecurityController::registerSubmit` |
+| GET | `/admin` | admin | `AdminController::index` |
+| GET | `/overlay` | public | `OverlayController::index` |
+| POST | `/logout` | logged in | `SecurityController::logout` |
 
 ## Project status
 
 The project is under active development. Known placeholders:
 
-- **No POST routes** — forms look functional, but submitting them returns 404.
-- **No sessions/authentication** — `/admin` and `/profile` are public.
-- **Shared layout** — views are rendered inside `public/views/layout.html.php`,
-  which includes the `header` and `footer` partials. Views do not call them
-  directly.
+- **Profile forms** — the avatar upload and promo code forms on `/profile` have no POST routes yet (they render but cannot be submitted).
+- **Role change in admin panel** — the admin panel lists roles (`viewer`, `admin`) but changing a user's role has no POST route yet.
+- **Shared layout** — views are rendered inside `public/views/layout.html.php`, which includes the `header` and `footer` partials. Views do not call them directly.
 - **Numeric route parameters only** (`\d+`).
-- The `src/controllers` directory deviates from PSR-4 (`src/Controller`); it works
-  through a mapping in `composer.json`, and renaming is planned.
+- The `src/controllers` directory deviates from PSR-4 (`src/Controller`); it works through a mapping in `composer.json`, and renaming is planned.
+
+## Authentication and roles
+
+### Sessions
+
+- Sessions are native PHP, started exclusively through `App\Session` (`src/Session.php`). `session_start()` is not called anywhere else.
+- Session cookie settings: `HttpOnly`, `SameSite=Lax`, `Secure` when the request goes over HTTPS, `session.use_strict_mode=1`, `session.use_only_cookies=1`.
+- The session stores only `user_id` (int) and the CSRF token. The user's role and other data are read from the database on every request through `App\Repository\UserRepository`. Role or id coming from POST, GET, cookie, or headers are never trusted.
+- After successful login: `session_regenerate_id(true)`. Logout: clears `$_SESSION`, calls `session_destroy()`, and expires the session cookie.
+- Protected pages send `Cache-Control: no-store`.
+
+### Passwords
+
+- Passwords are hashed exclusively with `password_hash(..., PASSWORD_DEFAULT)` and verified with `password_verify()`.
+- Failed login returns the same generic message regardless of whether the e-mail exists.
+
+### CSRF
+
+- Every POST route requires a valid CSRF token (hidden field `csrf_token`, compared with `hash_equals`). Logout is a POST route.
+
+### Roles
+
+- Two roles exist: `viewer` and `admin`. They are stored in the `users.role` column (`VARCHAR(20)`) with a `CHECK` constraint allowing only `viewer` or `admin`.
+- `viewer` can access `/profile` and public pages. `admin` can additionally access `/admin`.
+- Role is read from the database on every request, never from the session or request parameters.
+
+### Demonstration accounts (seed data)
+
+All seed users share the developer-only password `StreamRip123!`. This password is for local development only and must not be used in production.
+
+| Username | E-mail | Role |
+|---|---|---|
+| `ClipMaster` | `ClipMaster@example.com` | viewer |
+| `HypeConductor` | `HypeConductor@example.com` | viewer |
+| `LurkerLarry99` | `LurkerLarry99@example.com` | viewer |
+| `EmoteGoblin` | `EmoteGoblin@example.com` | viewer |
+| `RageQuitRhino` | `RageQuitRhino@example.com` | viewer |
+| `StreamerBoss` | `StreamerBoss@example.com` | admin |
+| `ViewerOne` | `ViewerOne@example.com` | viewer |
+| `ModMaria` | `ModMaria@example.com` | viewer |
+
+### How to verify
+
+| User | `/profile` | `/admin` |
+|---|---|---|
+| Not logged in | 302 redirect to `/login` | 302 redirect to `/login` |
+| Viewer | 200 | 403 |
+| Admin | 200 | 200 |
 
 ## Database
 
