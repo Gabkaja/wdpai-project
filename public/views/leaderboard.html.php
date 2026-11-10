@@ -74,7 +74,7 @@
 
                             <p class="podium__rarest">
                                 <span class="icon" aria-hidden="true">target</span>
-                                Rarest card: <strong>--</strong>
+                                Rarest card: <strong><?= htmlspecialchars($player->getRarestCardName() ?? '--') ?></strong>
                             </p>
 
                             <p class="podium__packs">
@@ -132,7 +132,7 @@
                                                 <?= htmlspecialchars($player->getUsername()) ?>
                                                 <span class="icon" aria-hidden="true">verified</span>
                                             </span>
-                                            <span class="ranking__sub">Rarest card: --</span>
+                                            <span class="ranking__sub">Rarest card: <?= htmlspecialchars($player->getRarestCardName() ?? '--') ?></span>
                                         </div>
                                     </div>
                                 </td>
@@ -153,7 +153,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <time class="ranking__joined" datetime="--">--</time>
+                                    <time class="ranking__joined" datetime="<?= htmlspecialchars($player->getJoinedAt()->format('Y-m-d')) ?>"><?= htmlspecialchars($player->getJoinedAt()->format('Y-m-d')) ?></time>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -164,13 +164,13 @@
             <div class="leaderboard-footer">
                 <p>Showing 1&ndash;<?= count($players) ?> of <?= count($players) ?> collectors</p>
                 <nav class="pagination" aria-label="Leaderboard pagination">
-                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=<?= max(1, 1 - 1) ?>" aria-label="Previous page">
+                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=1" aria-label="Previous page">
                         <span class="icon" aria-hidden="true">chevron_left</span>
                     </a>
-                    <?php for ($page = 1; $page <= 1; $page++): ?>
-                        <a class="pagination__link" href="/leaderboard?page=<?= $page ?>"<?= $page === 1 ? ' aria-current="page"' : '' ?>>Page <?= $page ?></a>
-                    <?php endfor; ?>
-                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=<?= min(1, 1 + 1) ?>" aria-label="Next page">
+                    <a class="pagination__link" href="/leaderboard?page=1" aria-current="page">
+                        Page 1
+                    </a>
+                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=1" aria-label="Next page">
                         <span class="icon" aria-hidden="true">chevron_right</span>
                     </a>
                 </nav>

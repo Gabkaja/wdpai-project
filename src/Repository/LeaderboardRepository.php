@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Model\LeaderboardEntry;
+use DateTimeImmutable;
 use PDO;
 
 final class LeaderboardRepository
@@ -18,7 +19,7 @@ final class LeaderboardRepository
 
     public function all(): array
     {
-        $statement = $this->pdo->query('SELECT user_id, username, total_cards, unique_cards, rank_position FROM leaderboard_view ORDER BY rank_position, username');
+        $statement = $this->pdo->query('SELECT user_id, username, total_cards, unique_cards, rank_position, joined_at, rarest_card_name FROM leaderboard_view ORDER BY rank_position, username');
 
         $entries = [];
 
@@ -36,7 +37,9 @@ final class LeaderboardRepository
             $row['username'],
             (int) $row['total_cards'],
             (int) $row['unique_cards'],
-            (int) $row['rank_position']
+            (int) $row['rank_position'],
+            new DateTimeImmutable($row['joined_at']),
+            $row['rarest_card_name']
         );
     }
 }
