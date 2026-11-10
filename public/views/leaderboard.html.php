@@ -33,7 +33,7 @@
         </section>
 
         <?php
-        $maxUniqueCards = max(1, max(array_column($players, 'uniqueCards')));
+        $maxUniqueCards = max(1, max(array_map(fn ($entry) => $entry->getUniqueCards(), $players)));
         $podiumClasses = ['gold', 'silver', 'bronze'];
         $medalLabels = ['Gold', 'Silver', 'Bronze'];
         ?>
@@ -43,22 +43,22 @@
 
             <ol class="podium" role="list">
                 <?php foreach ($podium as $index => $player): ?>
-                    <?php $completion = (int) round($player['uniqueCards'] / $maxUniqueCards * 100); ?>
+                    <?php $completion = (int) round($player->getUniqueCards() / $maxUniqueCards * 100); ?>
                     <li class="podium__item podium__item--<?= $index + 1 ?>">
                         <article class="podium__card podium__card--<?= $podiumClasses[$index] ?>">
                             <span class="podium__badge">
                                 <span class="icon" aria-hidden="true">emoji_events</span>
-                                <?= htmlspecialchars($medalLabels[$index]) ?>: <?= htmlspecialchars($player['username']) ?>
+                                <?= htmlspecialchars($medalLabels[$index]) ?>: <?= htmlspecialchars($player->getUsername()) ?>
                             </span>
 
                             <div class="podium__header">
-                                <span class="podium__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($player['username'], 0, 1))) ?></span>
+                                <span class="podium__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($player->getUsername(), 0, 1))) ?></span>
                                 <div>
                                     <h3 class="podium__name">
-                                        <?= htmlspecialchars($player['username']) ?>
+                                        <?= htmlspecialchars($player->getUsername()) ?>
                                         <span class="icon" aria-hidden="true">verified</span>
                                     </h3>
-                                    <p class="podium__meta">Unique cards: <?= (int) $player['uniqueCards'] ?></p>
+                                    <p class="podium__meta">Unique cards: <?= (int) $player->getUniqueCards() ?></p>
                                 </div>
                             </div>
 
@@ -74,12 +74,12 @@
 
                             <p class="podium__rarest">
                                 <span class="icon" aria-hidden="true">target</span>
-                                Rarest card: <strong><?= htmlspecialchars($player['rarestCard']) ?></strong>
+                                Rarest card: <strong>--</strong>
                             </p>
 
                             <p class="podium__packs">
                                 <span>Packs opened</span>
-                                <strong><?= (int) $player['packsOpened'] ?></strong>
+                                <strong>--</strong>
                             </p>
                         </article>
                     </li>
@@ -92,7 +92,7 @@
 
             <div class="leaderboard-controls">
                 <div class="search">
-                    <span class="icon search__icon" aria-hidden="true">search</span>
+                    <span class="icon search__icon" aria-hidden="true"></span>
                     <label class="visually-hidden" for="leaderboard-search">Search collector</label>
                     <input class="search__input" type="search" id="leaderboard-search" name="q" placeholder="Search collector...">
                 </div>
@@ -119,26 +119,26 @@
                     </thead>
                     <tbody>
                         <?php foreach ($players as $player): ?>
-                            <?php $completion = (int) round($player['uniqueCards'] / $maxUniqueCards * 100); ?>
+                            <?php $completion = (int) round($player->getUniqueCards() / $maxUniqueCards * 100); ?>
                             <tr>
                                 <th scope="row">
-                                    <span class="ranking__rank ranking__rank--<?= (int) $player['rank'] ?>"><?= (int) $player['rank'] ?></span>
+                                    <span class="ranking__rank ranking__rank--<?= (int) $player->getRankPosition() ?>"><?= (int) $player->getRankPosition() ?></span>
                                 </th>
                                 <td>
                                     <div class="ranking__player">
-                                        <span class="ranking__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($player['username'], 0, 1))) ?></span>
+                                        <span class="ranking__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($player->getUsername(), 0, 1))) ?></span>
                                         <div>
                                             <span class="ranking__name">
-                                                <?= htmlspecialchars($player['username']) ?>
+                                                <?= htmlspecialchars($player->getUsername()) ?>
                                                 <span class="icon" aria-hidden="true">verified</span>
                                             </span>
-                                            <span class="ranking__sub">Rarest card: <?= htmlspecialchars($player['rarestCard']) ?></span>
+                                            <span class="ranking__sub">Rarest card: --</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="ranking__cards">
-                                        <span class="ranking__value"><?= (int) $player['uniqueCards'] ?></span>
+                                        <span class="ranking__value"><?= (int) $player->getUniqueCards() ?></span>
                                         <span class="progress__track">
                                             <span class="progress__bar" style="width: <?= $completion ?>%"></span>
                                         </span>
@@ -146,14 +146,14 @@
                                 </td>
                                 <td>
                                     <span class="ranking__packs">
-                                        <span class="ranking__value"><?= (int) $player['packsOpened'] ?></span>
-                                        <?php if ($player['rank'] === 1): ?>
+                                        <span class="ranking__value">--</span>
+                                        <?php if ($player->getRankPosition() === 1): ?>
                                             <span class="ranking__tag">Top</span>
                                         <?php endif; ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <time class="ranking__joined" datetime="<?= htmlspecialchars($player['joined']) ?>"><?= htmlspecialchars($player['joined']) ?></time>
+                                    <time class="ranking__joined" datetime="--">--</time>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -164,13 +164,13 @@
             <div class="leaderboard-footer">
                 <p>Showing 1&ndash;<?= count($players) ?> of <?= count($players) ?> collectors</p>
                 <nav class="pagination" aria-label="Leaderboard pagination">
-                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=<?= max(1, $currentPage - 1) ?>" aria-label="Previous page">
+                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=<?= max(1, 1 - 1) ?>" aria-label="Previous page">
                         <span class="icon" aria-hidden="true">chevron_left</span>
                     </a>
-                    <?php for ($page = 1; $page <= $totalPages; $page++): ?>
-                        <a class="pagination__link" href="/leaderboard?page=<?= $page ?>"<?= $page === $currentPage ? ' aria-current="page"' : '' ?>>Page <?= $page ?></a>
+                    <?php for ($page = 1; $page <= 1; $page++): ?>
+                        <a class="pagination__link" href="/leaderboard?page=<?= $page ?>"<?= $page === 1 ? ' aria-current="page"' : '' ?>>Page <?= $page ?></a>
                     <?php endfor; ?>
-                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=<?= min($totalPages, $currentPage + 1) ?>" aria-label="Next page">
+                    <a class="pagination__link pagination__link--arrow" href="/leaderboard?page=<?= min(1, 1 + 1) ?>" aria-label="Next page">
                         <span class="icon" aria-hidden="true">chevron_right</span>
                     </a>
                 </nav>
