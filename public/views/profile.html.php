@@ -1,4 +1,11 @@
     <main class="profile">
+        <?php $flash = $flash ?? null; ?>
+        <?php if ($flash !== null): ?>
+            <div class="auth-alert<?= $flash['type'] === 'error' ? ' auth-alert--error' : '' ?>" role="alert">
+                <span class="icon" aria-hidden="true"><?= $flash['type'] === 'error' ? 'error' : 'check_circle' ?></span>
+                <p class="auth-alert__text"><?= htmlspecialchars($flash['message'], ENT_QUOTES, 'UTF-8') ?></p>
+            </div>
+        <?php endif; ?>
         <section class="profile-hero" aria-labelledby="profile-title">
             <div class="profile-hero__inner">
                 <div class="profile-hero__identity">
@@ -170,6 +177,43 @@
                         </li>
                     </ul>
                 </section>
+
+                <?php if ($kickAccount !== null): ?>
+                    <section class="profile-panel" aria-labelledby="kick-heading">
+                        <div class="profile-panel__head">
+                            <h2 class="profile-panel__title" id="kick-heading">
+                                <span class="icon" aria-hidden="true">verified</span>
+                                Kick account
+                            </h2>
+                        </div>
+                        <div class="profile-panel__text">
+                            Connected with Kick as <strong><?= htmlspecialchars($kickAccount['kick_username']) ?></strong>.
+                        </div>
+                        <form class="profile-panel__form" method="post" action="/profile/kick/unlink">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                            <button class="button button--primary" type="submit">
+                                <span class="icon" aria-hidden="true">unlink</span>
+                                Disconnect
+                            </button>
+                        </form>
+                    </section>
+                <?php else: ?>
+                    <section class="profile-panel" aria-labelledby="kick-heading">
+                        <div class="profile-panel__head">
+                            <h2 class="profile-panel__title" id="kick-heading">
+                                <span class="icon" aria-hidden="true">verified</span>
+                                Kick account
+                            </h2>
+                        </div>
+                        <div class="profile-panel__text">
+                            Not connected. Link your Kick account to log in with Kick.
+                        </div>
+                        <a class="button button--primary" href="/profile/kick/connect">
+                            <span class="icon" aria-hidden="true">link</span>
+                            Connect Kick
+                        </a>
+                    </section>
+                <?php endif; ?>
             </div>
 
             <section class="profile-panel profile-collection" aria-labelledby="collection-heading">

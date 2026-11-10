@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Database;
 use App\Repository\CardRepository;
+use App\Repository\KickAccountRepository;
 
 final class ProfileController extends AppController
 {
@@ -18,6 +19,7 @@ final class ProfileController extends AppController
         $pdo = (new Database())->connect();
         $cards = (new CardRepository($pdo))->all();
         $ownedIds = self::OWNED_CARD_IDS;
+        $kickAccount = (new KickAccountRepository($pdo))->findByUserId($user->getId());
 
         $this->render('profile', [
             'pageTitle' => 'My profile – StreamRip',
@@ -33,6 +35,7 @@ final class ProfileController extends AppController
             ],
             'cards' => $cards,
             'ownedIds' => $ownedIds,
+            'kickAccount' => $kickAccount,
         ]);
     }
 }
