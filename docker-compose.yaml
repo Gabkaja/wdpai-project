@@ -44,6 +44,9 @@ services:
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KICK_CLIENT_ID: ${KICK_CLIENT_ID}
+      KICK_CLIENT_SECRET: ${KICK_CLIENT_SECRET}
+      KICK_REDIRECT_URI: ${KICK_REDIRECT_URI}
     depends_on:
       db:
         condition: service_healthy

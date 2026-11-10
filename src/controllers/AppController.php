@@ -89,6 +89,10 @@ abstract class AppController
             $variables['currentUser'] = $this->currentUser();
         }
 
+        if ($layout !== null && !isset($variables['flash'])) {
+            $variables['flash'] = Session::consumeFlash();
+        }
+
         $templatePath = $this->viewPath($template);
 
         extract($variables, EXTR_SKIP);

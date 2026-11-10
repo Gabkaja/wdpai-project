@@ -11,6 +11,7 @@ use App\Controller\LeaderboardController;
 use App\Controller\SecurityController;
 use App\Controller\AdminController;
 use App\Controller\OverlayController;
+use App\Controller\KickController;
 use App\Repository\LogRepository;
 use App\Session;
 
@@ -32,6 +33,10 @@ $routing->get('/register', SecurityController::class, 'register');
 $routing->post('/register', SecurityController::class, 'registerSubmit');
 $routing->get('/admin', AdminController::class, 'index');
 $routing->get('/overlay', OverlayController::class, 'index');
+$routing->get('/auth/kick/login', KickController::class, 'login');
+$routing->get('/profile/kick/connect', KickController::class, 'connect');
+$routing->get('/auth/kick/callback', KickController::class, 'callback');
+$routing->post('/profile/kick/unlink', KickController::class, 'unlink');
 $routing->post('/logout', SecurityController::class, 'logout');
 
 try {

@@ -93,4 +93,48 @@ final class Session
 
         return hash_equals($stored, $token);
     }
+
+    public static function storeKickOAuth(string $state, string $verifier, string $purpose, ?int $userId): void
+    {
+        $_SESSION['kick_oauth'] = [
+            'state' => $state,
+            'verifier' => $verifier,
+            'purpose' => $purpose,
+            'user_id' => $userId,
+        ];
+    }
+
+    public static function consumeKickOAuth(): ?array
+    {
+        $data = $_SESSION['kick_oauth'] ?? null;
+
+        if ($data === null) {
+            return null;
+        }
+
+        unset($_SESSION['kick_oauth']);
+
+        return $data;
+    }
+
+    public static function flash(string $type, string $message): void
+    {
+        $_SESSION['flash'] = [
+            'type' => $type,
+            'message' => $message,
+        ];
+    }
+
+    public static function consumeFlash(): ?array
+    {
+        $data = $_SESSION['flash'] ?? null;
+
+        if ($data === null) {
+            return null;
+        }
+
+        unset($_SESSION['flash']);
+
+        return $data;
+    }
 }
