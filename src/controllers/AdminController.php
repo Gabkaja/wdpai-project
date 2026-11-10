@@ -28,6 +28,8 @@ final class AdminController extends AppController
 
     public function index(): void
     {
+        $user = $this->requireRole('admin');
+
         $this->render('admin', [
             'pageTitle' => 'Admin panel – StreamRip',
             'cards' => $this->cardRepository->all(),
@@ -40,6 +42,7 @@ final class AdminController extends AppController
                 'removed' => 14,
                 'nextRun' => '2026-10-27 03:00',
             ],
+            'currentUser' => $user,
         ]);
     }
 }

@@ -13,7 +13,7 @@ final class ProfileController extends AppController
 
     public function index(): void
     {
-        $this->requireLogin();
+        $user = $this->requireLogin();
 
         $pdo = (new Database())->connect();
         $cards = (new CardRepository($pdo))->all();
@@ -21,7 +21,10 @@ final class ProfileController extends AppController
 
         $this->render('profile', [
             'pageTitle' => 'My profile – StreamRip',
-            'username' => 'ViewerOne',
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'points' => $user->getPoints(),
+            'memberSince' => $user->getCreatedAt()->format('F Y'),
             'stats' => [
                 'totalCards' => count($ownedIds),
                 'completion' => (int) round(count($ownedIds) / count($cards) * 100),
