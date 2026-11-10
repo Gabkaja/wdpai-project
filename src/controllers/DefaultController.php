@@ -4,13 +4,33 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Database;
 use App\Repository\CardRepository;
+use App\Repository\RarityRepository;
 
 final class DefaultController extends AppController
 {
+    private CardRepository $cardRepository;
+    private RarityRepository $rarityRepository;
+
+    public function __construct()
+    {
+        $pdo = (new Database())->connect();
+        $this->cardRepository = new CardRepository($pdo);
+        $this->rarityRepository = new RarityRepository($pdo);
+    }
+
     public function index(): void
     {
-        $cards = (new CardRepository())->all();
+        $cards = $this->cardRepository->all();
+        $rarities = $this->rarityRepository->all();
+
+        $rarityCounts = [];
+
+        foreach ($cards as $card) {
+            $code = $card->getRarityCode();
+            $rarityCounts[$code] = ($rarityCounts[$code] ?? 0) + 1;
+        }
 
         $this->render('home', [
             'pageTitle' => 'StreamRip – Card Catalog',
@@ -25,8 +45,8 @@ final class DefaultController extends AppController
                 'server' => 'EU-Warsaw • Sync Pool #184',
             ],
             'cards' => $cards,
-            'rarities' => ['common', 'rare', 'epic', 'legendary'],
-            'rarityCounts' => array_count_values(array_column($cards, 'rarity')),
+            'rarities' => $rarities,
+            'rarityCounts' => $rarityCounts,
         ]);
     }
 
