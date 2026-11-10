@@ -4,27 +4,34 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Database;
 use App\Repository\CardRepository;
+use App\Repository\LogRepository;
+use App\Repository\UserRepository;
 
 final class AdminController extends AppController
 {
+    private CardRepository $cardRepository;
+    private UserRepository $userRepository;
+    private LogRepository $logRepository;
+
+    public function __construct()
+    {
+        $pdo = (new Database())->connect();
+        $this->cardRepository = new CardRepository($pdo);
+        $this->userRepository = new UserRepository($pdo);
+        $this->logRepository = new LogRepository($pdo);
+    }
+
     public function index(): void
     {
         $this->render('admin', [
             'pageTitle' => 'Admin panel – StreamRip',
-            'cards' => (new CardRepository())->all(),
+            'cards' => $this->cardRepository->all(),
             'rarities' => ['common', 'rare', 'epic', 'legendary'],
-            'roles' => ['user', 'moderator', 'admin'],
-            'users' => [
-                ['id' => 1, 'username' => 'ViewerOne', 'email' => 'viewer@example.com', 'role' => 'user'],
-                ['id' => 2, 'username' => 'ModMaria', 'email' => 'maria@example.com', 'role' => 'moderator'],
-                ['id' => 3, 'username' => 'StreamerBoss', 'email' => 'boss@example.com', 'role' => 'admin'],
-            ],
-            'logs' => [
-                ['time' => '2026-10-26 20:14', 'level' => 'info', 'message' => 'Pack opened for ViewerOne (3 cards).'],
-                ['time' => '2026-10-26 20:09', 'level' => 'warning', 'message' => 'Kick chat bot reconnected after timeout.'],
-                ['time' => '2026-10-26 19:58', 'level' => 'error', 'message' => 'Failed to deliver overlay event to OBS.'],
-            ],
+            'roles' => ['viewer', 'admin'],
+            'users' => $this->userRepository->all(),
+            'logs' => $this->logRepository->latest(50),
             'cleanup' => [
                 'lastRun' => '2026-10-26 03:00',
                 'removed' => 14,
