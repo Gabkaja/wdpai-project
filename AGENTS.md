@@ -15,7 +15,7 @@ bez frameworka: własny router, kontrolery i widoki `.html.php`.
 | Serwer HTTP | Nginx + php-fpm |
 | Autoload | Composer (PSR-4) |
 | Konteneryzacja | Docker Compose |
-| Baza danych | PostgreSQL w compose — **jeszcze nieużywana przez kod** |
+| Baza danych | PostgreSQL (PDO, `pdo_pgsql`) |
 
 ## Uruchomienie
 
@@ -41,7 +41,10 @@ public/views/layout.html.php  # wspólny layout (header, content, footer)
 public/views/partials/*.php   # partiale: header, footer, card-list
 src/Routing.php               # router (rejestracja + dispatch)
 src/controllers/              # kontrolery (namespace App\Controller)
+src/Model/                    # modele danych (namespace App\Model)
 src/Repository/               # źródła danych (namespace App\Repository)
+src/Database.php              # fabryka połączenia PDO
+database/                     # numerowane skrypty SQL (schemat, widoki, dane startowe)
 docker/                       # konfiguracja nginx, php, db
 ```
 
@@ -65,13 +68,25 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
   `public/views/partials/`.
 - **Escaping**: każdy tekst z danych wstawiaj przez `htmlspecialchars(...)`.
   Liczby rzutuj przez `(int)` / formatuj `number_format(...)`.
-- **Dane źródłowe**: `App\Repository\CardRepository` (tablica w pamięci, `all()` /
-  `find(int)`). Pozostałe dane przykładowe są lokalnie w kontrolerach. Nie zakładaj
-  istnienia bazy danych, mimo że Postgres jest w `docker-compose.yaml`.
+- **Dane źródłowe**: karty, ranking i dane panelu admina pochodzą z PostgreSQL przez `App\Repository\*`. Dane `/profile` pozostają lokalnie w kontrolerze do czasu wdrożenia sesji.
 - **404**: brak trasy obsługuje `public/index.php` (`dispatch()` zwraca `false` →
   `DefaultController::notFound()`). `CardController::show()` sam ustawia 404, gdy
   karta nie istnieje. Utrzymuj ten wzorzec, dopóki nie powstanie centralna obsługa
   wyjątków.
+
+## Baza danych (PostgreSQL)
+
+- Połączenie tworzy wyłącznie `App\Database::connect()` (PDO, `pdo_pgsql`, `ERRMODE_EXCEPTION`, `FETCH_ASSOC`, `EMULATE_PREPARES=false`). Konfiguracja z `getenv()`: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, przekazywane do kontenera `php` w `docker-compose.yaml` z `.env`. Nie twórz `config.php` ani stałych z hasłami. Wewnątrz Dockera host bazy to `db`, port `5432`.
+- SQL wolno pisać tylko w `src/Repository/`. Kontrolery i widoki nie znają PDO ani SQL.
+- Każde zapytanie z wartością spoza kodu: `prepare()` + `execute()` z nazwanymi parametrami. Zakaz konkatenacji i interpolacji. `query()` tylko dla stałych zapytań bez parametrów.
+- Modele w `src/Model/` (`App\Model`): `final`, bez PDO i SQL, typy jawne. Repozytorium mapuje wiersz na model w prywatnej metodzie `mapRowTo<Model>`. Nie twórz katalogów `src/models` ani `src/repositories`.
+- Repozytoria dostają `PDO` przez konstruktor. Kontroler tworzy połączenie raz (`(new Database())->connect()`) i przekazuje je repozytoriom.
+- Schemat i dane startowe: `database/NN-nazwa.sql`, montowane do `/docker-entrypoint-initdb.d`. Wykonują się tylko przy pustym wolumenie (`docker compose down -v`, potem `docker compose up --build -d`). Zmianę schematu po scommitowaniu zapisuj w nowym pliku z kolejnym numerem.
+- Konwencje SQL: słowa kluczowe wielkimi literami, nazwy w `snake_case`, tabele w liczbie mnogiej, klucze główne `GENERATED ALWAYS AS IDENTITY`, `TIMESTAMPTZ` dla dat, każdy klucz obcy z jawnym `ON DELETE`, nazwane ograniczenia (`<tabela>_<kolumna>_check`).
+- Transakcje (`beginTransaction()`, `commit()`, `rollBack()`) tylko w repozytoriach; przy wyjątku `rollBack()` i ponowny `throw`.
+- Komunikaty błędów PDO nie trafiają do użytkownika ani do widoku; szczegóły idą do `error_log()` lub `system_logs`.
+- Zakaz komentarzy dotyczy też docblocków i plików SQL.
+- Nie dodawaj ORM ani bibliotek do obsługi bazy.
 
 ## Konwencje kodu
 
@@ -92,7 +107,6 @@ Nie traktuj poniższych jako błędów do „naprawienia” bez polecenia:
 
 - Formularze używają `method="post"`, ale **nie ma zarejestrowanych tras POST** —
   ich wysłanie daje 404. To celowe placeholdery.
-- Brak bazy danych — `CardRepository` to dane w pamięci (świadome, tymczasowe).
 - Routing obsługuje tylko parametry numeryczne (świadome, tymczasowe).
 - Sesje/uwierzytelnianie są planowane; obecnie `/admin` i `/profile` są publiczne.
 - Katalog `src/controllers` (mała litera) odbiega od PSR-4 (`src/Controller`) i działa
@@ -107,6 +121,7 @@ analizy. Przed uznaniem zadania za gotowe:
 1. Sprawdź składnię zmienionych plików: `php -l <plik>` (lokalnie lub w kontenerze).
 2. Jeśli zmieniałeś autoload/namespace: `composer dump-autoload`.
 3. Przetestuj ręcznie dotknięte trasy pod http://localhost:8080.
+4. Po zmianie `database/*.sql`: `docker compose down -v && docker compose up --build -d`, potem sprawdź strukturę przez `docker compose exec db psql`.
 
 Jeśli dodasz narzędzia (PHPUnit, PHPStan, linter) — zaktualizuj tę sekcję.
 
