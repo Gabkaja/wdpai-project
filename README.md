@@ -13,6 +13,7 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 | Leaderboard | Podium and the full collector ranking |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
+| Kick login | Log in with Kick (OAuth 2.1 + PKCE) and link/unlink Kick account from profile |
 | About | Project information and how it works (`/about`) |
 | 404 | Consistent error screen for unknown routes and missing cards |
 
@@ -42,6 +43,9 @@ PGADMIN_PORT=5050
 PGADMIN_CONTAINER_NAME=pg-admin
 PGADMIN_DEFAULT_EMAIL=admin@example.com
 PGADMIN_DEFAULT_PASSWORD=change-me
+KICK_CLIENT_ID=your-kick-client-id
+KICK_CLIENT_SECRET=your-kick-client-secret
+KICK_REDIRECT_URI=http://localhost:8080/auth/kick/callback
 ```
 
 Then:
@@ -51,6 +55,8 @@ docker compose up --build -d
 ```
 
 Application: http://localhost:8080 (port follows `APP_PORT`).
+
+Before using Kick login, register a Kick app at https://kick.com/settings/developer and set the redirect URI to `http://localhost:8080/auth/kick/callback` (or your deployment URL). Copy the app's client ID, client secret and redirect URI into `.env` as `KICK_CLIENT_ID`, `KICK_CLIENT_SECRET` and `KICK_REDIRECT_URI`.
 
 After changing `composer.json` or the namespace structure:
 
@@ -72,8 +78,13 @@ src/controllers/              # controllers (App\Controller namespace)
 src/Model/                    # data models (App\Model namespace)
 src/Repository/               # data sources (App\Repository namespace)
 src/Database.php              # PDO connection factory
-src/Session.php               # native PHP session management (start, login, logout, CSRF)
+src/Session.php               # native PHP session management (start, login, logout, CSRF, Kick OAuth state)
+src/Service/                  # external service clients
+src/Service/KickClient.php    # Kick OAuth 2.1 client (authorize URL, token exchange, current user)
+src/Repository/               # data sources (App\Repository namespace)
+src/Repository/KickAccountRepository.php   # kick_accounts table access
 database/                     # numbered SQL scripts (schema, views, seed data)
+database/04-kick-accounts.sql # kick_accounts table
 docker/                       # nginx, php and db configuration
 ```
 
@@ -117,6 +128,10 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 | GET | `/admin` | admin | `AdminController::index` |
 | GET | `/overlay` | public | `OverlayController::index` |
 | POST | `/logout` | logged in | `SecurityController::logout` |
+| GET | `/auth/kick/login` | public | `KickController::login` |
+| GET | `/auth/kick/callback` | public | `KickController::callback` |
+| GET | `/profile/kick/connect` | logged in | `KickController::connect` |
+| POST | `/profile/kick/unlink` | logged in | `KickController::unlink` |
 
 ## Project status
 
@@ -176,7 +191,40 @@ All seed users share the developer-only password `StreamRip123!`. This password 
 | Viewer | 200 | 403 |
 | Admin | 200 | 200 |
 
-## Database
+## Kick login
+
+Kick is used only for logging in and linking to an existing StreamRip account. There is no registration directly through Kick, and a Kick account without a link cannot log in.
+
+### OAuth 2.1 with PKCE
+
+- `GET /auth/kick/login` starts the flow. The controller generates `state` and `code_verifier` from `random_bytes`, computes `code_challenge` (SHA-256, base64url), stores them in the session with purpose `login`, and redirects to `https://id.kick.com/oauth/authorize` with `response_type=code`, `scope=user:read`, `code_challenge`, `code_challenge_method=S256` and `state`.
+- `GET /profile/kick/connect` (requires login) does the same with purpose `link` and the current user's id stored in the session.
+- `GET /auth/kick/callback` receives the authorization code. The stored `state` is consumed once and compared with `hash_equals`; a missing, expired or mismatched `state` aborts the flow with a generic error. The code is exchanged for an access token via `POST /oauth/token`, then the current Kick user is fetched from `GET /public/v1/users` (scope `user:read`).
+- Access tokens are never stored. From the API response only `kick_user_id` and `kick_username` are saved.
+
+### Linking rules
+
+- Login (`purpose=login`): the Kick user id is looked up in `kick_accounts`. If a link exists, the linked StreamRip user is logged in (`Session::login`, which regenerates the session id). If no link exists, the user is shown an error and redirected to `/login`.
+- Link (`purpose=link`): requires the session user to match the user id stored in the OAuth state. A new row is inserted into `kick_accounts`. If the Kick account is already linked to another StreamRip account (unique violation `23505`), an error is shown. On success an `info` entry is written to `system_logs` with the user id.
+- `POST /profile/kick/unlink` (requires login + CSRF) deletes the link and writes an `info` entry to `system_logs`.
+
+### Database table
+
+`kick_accounts` stores the link between a StreamRip user and a Kick account:
+
+| Column | Type | Notes |
+|---|---|---|
+| `user_id` | `BIGINT` | PK, references `users.id` ON DELETE CASCADE |
+| `kick_user_id` | `BIGINT` | NOT NULL, UNIQUE |
+| `kick_username` | `VARCHAR(100)` | NOT NULL |
+| `linked_at` | `TIMESTAMPTZ` | NOT NULL, default `CURRENT_TIMESTAMP` |
+
+The foreign key uses `ON DELETE CASCADE`: when a StreamRip user is deleted, their Kick link is removed automatically. The `user_id` primary key enforces at most one link per user (1:0..1 relationship).
+
+### What is not shown
+
+Kick points / balance are not available through the public API used here, so they are not fetched or displayed.
+
 
 ### Entity-relationship diagram
 
@@ -187,6 +235,7 @@ erDiagram
     users ||--o{ system_logs : generates
     cards ||--o{ user_cards : collected_in
     cards ||--o{ system_logs : referenced_in
+    users ||--|{ kick_accounts : links
 
     rarities {
         smallint id PK
@@ -227,6 +276,12 @@ erDiagram
         bigint user_id FK
         timestamptz created_at
     }
+    kick_accounts {
+        bigint user_id PK,FK
+        bigint kick_user_id UK
+        varchar kick_username
+        timestamptz linked_at
+    }
 ```
 
 ### Foreign keys
@@ -237,6 +292,7 @@ erDiagram
 | `user_cards.card_id` → `cards.id` | `cards` | `RESTRICT` | A card cannot be removed while a user still owns it. |
 | `cards.rarity_id` → `rarities.id` | `rarities` | `RESTRICT` | A rarity is a dictionary value; it cannot be deleted while cards reference it. |
 | `system_logs.user_id` → `users.id` | `users` | `SET NULL` | Event history must survive user deletion; the user reference becomes NULL. |
+| `kick_accounts.user_id` → `users.id` | `users` | `CASCADE` | Removing a StreamRip user also removes their Kick link. |
 
 `ON UPDATE` is the default (no action) everywhere because primary keys are `GENERATED ALWAYS AS IDENTITY` and never change.
 
