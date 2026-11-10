@@ -90,6 +90,18 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 - Zakaz komentarzy dotyczy też docblocków i plików SQL.
 - Nie dodawaj ORM ani bibliotek do obsługi bazy.
 
+## Sesje i uwierzytelnianie
+
+- Sesje natywne PHP, uruchamiane wyłącznie przez klasę `App\Session` (`src/Session.php`). Nie wołaj `session_start()` nigdzie indziej.
+- Ustawienia cookie sesji: `HttpOnly`, `SameSite=Lax`, `Secure` gdy żądanie idzie przez HTTPS, `session.use_strict_mode=1`, `session.use_only_cookies=1`.
+- W sesji przechowuj wyłącznie `user_id` (int) i token CSRF. Rola i dane użytkownika są za każdym razem odczytywane z bazy przez `UserRepository`. Nigdy nie ufaj roli ani id pochodzącym z POST, GET, cookie ani nagłówków.
+- Po udanym logowaniu: `session_regenerate_id(true)`. Wylogowanie: wyczyszczenie `$_SESSION`, `session_destroy()` i wygaszenie cookie sesji.
+- Hasła wyłącznie przez `password_hash(..., PASSWORD_DEFAULT)` i `password_verify(...)`. Błędne logowanie zwraca ten sam ogólny komunikat niezależnie od tego, czy e-mail istnieje.
+- Każda trasa POST wymaga ważnego tokenu CSRF (pole ukryte `csrf_token`, porównanie przez `hash_equals`). Wylogowanie jest trasą POST.
+- Ochrona tras: `AppController::requireLogin()` i `AppController::requireRole(string $role)`. Niezalogowany → przekierowanie na `/login`; zalogowany bez wymaganej roli → 403. Strony chronione wysyłają `Cache-Control: no-store`.
+- Po udanym POST zawsze przekierowanie (Post/Redirect/Get). Przy błędach walidacji: ponowne wyrenderowanie formularza ze statusem 422.
+- Trasy POST rejestruje się tak jak GET, w `public/index.php`.
+
 ## Konwencje kodu
 
 - **Nie dodawaj frameworków ani zależności bez zgody.**
@@ -107,10 +119,8 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 
 Nie traktuj poniższych jako błędów do „naprawienia” bez polecenia:
 
-- Formularze używają `method="post"`, ale **nie ma zarejestrowanych tras POST** —
-  ich wysłanie daje 404. To celowe placeholdery.
+- Formularze avatar upload i promo code w `/profile` nie mają tras POST (celowy placeholder do czasu wdrożenia kolekcji i punktów).
 - Routing obsługuje tylko parametry numeryczne (świadome, tymczasowe).
-- Sesje/uwierzytelnianie są planowane; obecnie `/admin` i `/profile` są publiczne.
 - Katalog `src/controllers` (mała litera) odbiega od PSR-4 (`src/Controller`) i działa
   dzięki osobnemu mapowaniu w `composer.json`. Zmiana nazwy jest planowana, ale
   niskopriorytetowa — nie wykonuj jej przy okazji innych zadań.
