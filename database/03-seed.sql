@@ -24,23 +24,24 @@ FROM (VALUES
     ('Source Code Dragon', 'legendary', 'SR-024', 0.3, 'terminal', 'The ultimate artifact of the first StreamRip edition. Comes with a holographic certificate and a unique lifetime patronage token on the Kick channel.')
 ) AS c(name, rarity_code, code, drop_chance, icon, description);
 
-INSERT INTO users (username, email, password_hash, role, points)
+INSERT INTO users (username, email, password_hash, role, points, created_at)
 SELECT
     u.username,
     u.username || '@example.com',
     '$2y$10$.HsU7et/b0B6BfboVVMxVecu97hQ6NWzhbBSQtygUlu74UqNpByce',
     u.role,
-    u.points
+    u.points,
+    u.created_at::timestamptz
 FROM (VALUES
-    ('ClipMaster', 'viewer', 100),
-    ('HypeConductor', 'viewer', 90),
-    ('LurkerLarry99', 'viewer', 85),
-    ('EmoteGoblin', 'viewer', 75),
-    ('RageQuitRhino', 'viewer', 65),
-    ('ViewerOne', 'viewer', 50),
-    ('ModMaria', 'viewer', 40),
-    ('StreamerBoss', 'admin', 30)
-) AS u(username, role, points);
+    ('ClipMaster', 'viewer', 100, '2026-01-15'),
+    ('HypeConductor', 'viewer', 90, '2026-02-20'),
+    ('LurkerLarry99', 'viewer', 85, '2026-03-25'),
+    ('EmoteGoblin', 'viewer', 75, '2026-04-30'),
+    ('RageQuitRhino', 'viewer', 65, '2026-05-15'),
+    ('StreamerBoss', 'admin', 30, '2026-06-20'),
+    ('ViewerOne', 'viewer', 50, '2026-08-10'),
+    ('ModMaria', 'viewer', 40, '2026-09-25')
+) AS u(username, role, points, created_at);
 
 INSERT INTO user_cards (user_id, card_id, quantity) VALUES
     ((SELECT id FROM users WHERE username = 'ClipMaster'), (SELECT id FROM cards WHERE code = 'SR-001'), 2),
