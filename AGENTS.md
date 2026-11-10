@@ -102,6 +102,15 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 - Po udanym POST zawsze przekierowanie (Post/Redirect/Get). Przy błędach walidacji: ponowne wyrenderowanie formularza ze statusem 422.
 - Trasy POST rejestruje się tak jak GET, w `public/index.php`.
 
+## Integracja z Kick (OAuth)
+
+- Kick OAuth 2.1 z obowiązkowym PKCE: `code_verifier` (losowe bajty, base64url) i `state` generowane przez `random_bytes`, przechowywane wyłącznie w sesji i zużywane jednorazowo; `state` porównuj przez `hash_equals`; `code_challenge_method=S256`.
+- Konfiguracja z `getenv()`: `KICK_CLIENT_ID`, `KICK_CLIENT_SECRET`, `KICK_REDIRECT_URI`, przekazywane do kontenera `php` w `docker-compose.yaml` z `.env`. Nigdy nie loguj ani nie renderuj sekretu, kodu autoryzacyjnego ani tokenów.
+- Wywołania HTTP do Kicka tylko przez `App\Service\KickClient` (`src/Service/KickClient.php`), na `curl` z PHP (bez nowych bibliotek), z timeoutem. Szczegóły endpointów i pól odpowiedzi weryfikuj w oficjalnej dokumentacji https://docs.kick.com, nie zgaduj.
+- Tokeny dostępowe Kicka nie są zapisywane w bazie, o ile zadanie tego wyraźnie nie wymaga. Z odpowiedzi API zapisujemy tylko `kick_user_id` i `kick_username`.
+- Tożsamość z Kicka jest wiązana z kontem wyłącznie przez `kick_user_id` (tabela `kick_accounts`), nigdy przez nazwę ani e-mail.
+- Wejście przez Kick nie omija ról ani sesji: po udanym callbacku wołaj `Session::login()` tak jak przy logowaniu hasłem.
+
 ## Konwencje kodu
 
 - **Nie dodawaj frameworków ani zależności bez zgody.**

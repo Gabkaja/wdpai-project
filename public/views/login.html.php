@@ -34,7 +34,7 @@
 
                 <form class="auth-form" method="post" action="/login">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                    <a class="auth-form__oauth" href="/auth/kick">
+                    <a class="auth-form__oauth" href="/auth/kick/login">
                         <span class="auth-form__kick-mark" aria-hidden="true">K</span>
                         <span>Continue with Kick.com</span>
                         <span class="icon" aria-hidden="true">arrow_forward</span>
@@ -81,6 +81,13 @@
                         Log in
                     </button>
 
+                    <?php $flash = $flash ?? null; ?>
+                    <?php if ($flash !== null): ?>
+                        <div class="auth-alert<?= $flash['type'] === 'error' ? ' auth-alert--error' : '' ?>" role="alert">
+                            <span class="icon" aria-hidden="true">error</span>
+                            <p class="auth-alert__text"><?= htmlspecialchars($flash['message'], ENT_QUOTES, 'UTF-8') ?></p>
+                        </div>
+                    <?php endif; ?>
                     <?php if (!empty($error)): ?>
                         <div class="auth-alert" role="alert">
                             <span class="icon" aria-hidden="true">error</span>
