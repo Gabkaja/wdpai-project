@@ -13,6 +13,8 @@ final class ProfileController extends AppController
 
     public function index(): void
     {
+        $this->requireLogin();
+
         $pdo = (new Database())->connect();
         $cards = (new CardRepository($pdo))->all();
         $ownedIds = self::OWNED_CARD_IDS;

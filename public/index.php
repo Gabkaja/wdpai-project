@@ -27,10 +27,12 @@ $routing->get('/cards/{id}', CardController::class, 'show');
 $routing->get('/profile', ProfileController::class, 'index');
 $routing->get('/leaderboard', LeaderboardController::class, 'index');
 $routing->get('/login', SecurityController::class, 'login');
+$routing->post('/login', SecurityController::class, 'loginSubmit');
 $routing->get('/register', SecurityController::class, 'register');
 $routing->post('/register', SecurityController::class, 'registerSubmit');
 $routing->get('/admin', AdminController::class, 'index');
 $routing->get('/overlay', OverlayController::class, 'index');
+$routing->post('/logout', SecurityController::class, 'logout');
 
 try {
     $routeFound = $routing->dispatch(

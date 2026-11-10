@@ -5,8 +5,11 @@ $navItems = [
     ['href' => '/', 'label' => 'Catalog'],
     ['href' => '/profile', 'label' => 'Profile'],
     ['href' => '/leaderboard', 'label' => 'Leaderboard'],
-    ['href' => '/admin', 'label' => 'Admin'],
 ];
+
+if (isset($currentUser) && $currentUser !== null && $currentUser->getRole() === 'admin') {
+    $navItems[] = ['href' => '/admin', 'label' => 'Admin'];
+}
 
 $isCurrent = static function (string $href) use ($currentPath): bool {
     if ($href === '/') {
@@ -40,11 +43,29 @@ $isCurrent = static function (string $href) use ($currentPath): bool {
                     <span class="icon" aria-hidden="true">light_mode</span>
                 </button>
 
-                <a class="button button--primary" href="/login">Log in<span class="button__extra"> / Register</span></a>
-
-                <a class="avatar" href="/profile" aria-label="Your profile">
-                    <span class="icon" aria-hidden="true">person</span>
-                </a>
+                <?php if (isset($currentUser) && $currentUser !== null): ?>
+                    <span class="header-tools__user" aria-hidden="true"><?= htmlspecialchars($currentUser->getUsername()) ?></span>
+                    <a class="button button--primary header-tools__profile" href="/profile">
+                        <span class="icon" aria-hidden="true">person</span>
+                        Profile
+                    </a>
+                    <form class="header-tools__logout" method="post" action="/logout" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                        <button class="button button--primary header-tools__logout-button" type="submit">
+                            <span class="icon" aria-hidden="true">logout</span>
+                            Logout
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <a class="button button--primary header-tools__login" href="/login">
+                        <span class="icon" aria-hidden="true">login</span>
+                        Log in
+                    </a>
+                    <a class="button button--primary header-tools__register" href="/register">
+                        <span class="icon" aria-hidden="true">person_add</span>
+                        Register
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </header>

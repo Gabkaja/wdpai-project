@@ -38,6 +38,7 @@ abstract class AppController
 
         if ($user === null) {
             http_response_code(302);
+            $this->noCache();
             header('Location: /login');
             exit;
         }
@@ -51,6 +52,7 @@ abstract class AppController
 
         if ($user->getRole() !== $role) {
             http_response_code(403);
+            $this->noCache();
             (new DefaultController())->forbidden();
             exit;
         }
@@ -65,6 +67,12 @@ abstract class AppController
         exit;
     }
 
+    protected function noCache(): void
+    {
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
+    }
+
     protected function verifyCsrfOrAbort(): void
     {
         $token = $_POST['csrf_token'] ?? null;
@@ -77,6 +85,10 @@ abstract class AppController
 
     protected function render(string $template, array $variables = [], ?string $layout = 'layout'): void
     {
+        if ($layout !== null && !isset($variables['currentUser'])) {
+            $variables['currentUser'] = $this->currentUser();
+        }
+
         $templatePath = $this->viewPath($template);
 
         extract($variables, EXTR_SKIP);

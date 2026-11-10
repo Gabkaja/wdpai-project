@@ -28,7 +28,7 @@
     <script src="/js/theme.js" defer></script>
 </head>
 <body>
-    <?php $this->partial('header'); ?>
+    <?php $this->partial('header', ['currentUser' => $currentUser ?? null]); ?>
 
     <?= $content ?>
 
