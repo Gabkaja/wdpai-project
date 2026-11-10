@@ -10,6 +10,12 @@
 
                     <h1 class="admin-hero__title" id="admin-title">Admin panel</h1>
 
+                    <div class="admin-hero__identity">
+                        <span class="admin-hero__identity-label">Signed in as</span>
+                        <span class="admin-hero__identity-name"><?= htmlspecialchars($currentUser->getUsername()) ?></span>
+                        <span class="admin-hero__identity-role"><?= htmlspecialchars(ucfirst($currentUser->getRole())) ?></span>
+                    </div>
+
                     <nav class="admin-tabs" aria-label="Admin sections">
                         <a class="admin-tab admin-tab--active" href="#cards">
                             <span class="icon" aria-hidden="true">style</span>

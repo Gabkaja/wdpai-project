@@ -33,6 +33,7 @@
                 <h2 class="auth__heading">Log in</h2>
 
                 <form class="auth-form" method="post" action="/login">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                     <a class="auth-form__oauth" href="/auth/kick">
                         <span class="auth-form__kick-mark" aria-hidden="true">K</span>
                         <span>Continue with Kick.com</span>
@@ -48,7 +49,7 @@
                         </div>
                         <div class="auth-form__input-wrap">
                             <span class="icon auth-form__input-icon" aria-hidden="true">alternate_email</span>
-                            <input class="auth-form__input" type="email" id="login-email" name="email" placeholder="viewer@example.com" required autocomplete="email">
+                            <input class="auth-form__input" type="email" id="login-email" name="email" placeholder="viewer@example.com" required autocomplete="email" value="<?= isset($old['email']) ? htmlspecialchars($old['email'], ENT_QUOTES, 'UTF-8') : '' ?>">
                         </div>
                     </div>
 

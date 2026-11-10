@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Database;
 use App\Repository\CardRepository;
 
 final class ProfileController extends AppController
@@ -12,12 +13,18 @@ final class ProfileController extends AppController
 
     public function index(): void
     {
-        $cards = (new CardRepository())->all();
+        $user = $this->requireLogin();
+
+        $pdo = (new Database())->connect();
+        $cards = (new CardRepository($pdo))->all();
         $ownedIds = self::OWNED_CARD_IDS;
 
         $this->render('profile', [
             'pageTitle' => 'My profile – StreamRip',
-            'username' => 'ViewerOne',
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'points' => $user->getPoints(),
+            'memberSince' => $user->getCreatedAt()->format('F Y'),
             'stats' => [
                 'totalCards' => count($ownedIds),
                 'completion' => (int) round(count($ownedIds) / count($cards) * 100),

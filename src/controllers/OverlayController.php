@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Database;
 use App\Repository\CardRepository;
 
 final class OverlayController extends AppController
 {
     public function index(): void
     {
-        $repository = new CardRepository();
+        $pdo = (new Database())->connect();
+        $repository = new CardRepository($pdo);
 
         $dropSeeds = [
             ['cardId' => 8, 'username' => 'ClipMaster', 'secondsAgo' => 12],

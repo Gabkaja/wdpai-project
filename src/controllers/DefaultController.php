@@ -63,4 +63,11 @@ final class DefaultController extends AppController
             'pageTitle' => 'Server error – StreamRip',
         ]);
     }
+
+    public function forbidden(): void
+    {
+        $this->render('403', [
+            'pageTitle' => 'Forbidden – StreamRip',
+        ]);
+    }
 }
