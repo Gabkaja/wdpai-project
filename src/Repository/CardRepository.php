@@ -4,40 +4,58 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Model\Card;
+use PDO;
+
 final class CardRepository
 {
-    private const CARDS = [
-        ['id' => 1, 'code' => 'SR-001', 'name' => 'Cyber Blade', 'rarity' => 'common', 'dropChance' => 45.0, 'icon' => 'hardware',
-         'description' => 'Basic synthetic upgrade. Every chat activity during the stream raises your chance of getting this combat component.'],
-        ['id' => 2, 'code' => 'SR-002', 'name' => 'Starter Pack', 'rarity' => 'common', 'dropChance' => 38.2, 'icon' => 'inventory',
-         'description' => 'A starter resource kit for new viewers joining the stream. Guaranteed drop every 15 minutes of watching the Kick stream.'],
-        ['id' => 3, 'code' => 'SR-007', 'name' => 'Quantum Shield', 'rarity' => 'rare', 'dropChance' => 18.5, 'icon' => 'shield',
-         'description' => 'A force field that absorbs streaming errors. Protects against card burn during consecutive pack opening attempts.'],
-        ['id' => 4, 'code' => 'SR-009', 'name' => 'Shadow Protocol', 'rarity' => 'rare', 'dropChance' => 14.0, 'icon' => 'visibility_off',
-         'description' => 'A masking algorithm for unboxing. Hides a rare foil drop from other chat participants until the official reveal.'],
-        ['id' => 5, 'code' => 'SR-014', 'name' => 'Overload Matrix', 'rarity' => 'epic', 'dropChance' => 6.5, 'icon' => 'electric_bolt',
-         'description' => 'Erupts in a violent wave of subscription energy. Doubles the drop chance multiplier for the next 5 boosters opened.'],
-        ['id' => 6, 'code' => 'SR-016', 'name' => 'Time Glitch', 'rarity' => 'epic', 'dropChance' => 4.2, 'icon' => 'hourglass_empty',
-         'description' => 'An anomaly in the video stream. Undoes a rejected card and lets the streamer re-roll in front of the audience.'],
-        ['id' => 7, 'code' => 'SR-021', 'name' => 'System Annihilator', 'rarity' => 'legendary', 'dropChance' => 0.8, 'icon' => 'destruction',
-         'description' => 'Absolute dominance over the broadcast session. Triggers confetti across the whole Kick chat and an automatic shipment of a physical PSA 10 graded slab.'],
-        ['id' => 8, 'code' => 'SR-024', 'name' => 'Source Code Dragon', 'rarity' => 'legendary', 'dropChance' => 0.3, 'icon' => 'terminal',
-         'description' => 'The ultimate artifact of the first StreamRip edition. Comes with a holographic certificate and a unique lifetime patronage token on the Kick channel.'],
-    ];
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
 
     public function all(): array
     {
-        return self::CARDS;
-    }
+        $statement = $this->pdo->query('SELECT c.id, c.name, c.code, c.drop_chance, c.icon, c.description, c.created_at, r.code AS rarity_code, r.name AS rarity_name FROM cards c JOIN rarities r ON r.id = c.rarity_id ORDER BY c.id');
 
-    public function find(int $id): ?array
-    {
-        foreach (self::CARDS as $card) {
-            if ($card['id'] === $id) {
-                return $card;
-            }
+        $cards = [];
+
+        foreach ($statement->fetchAll() as $row) {
+            $cards[] = $this->mapRowToCard($row);
         }
 
-        return null;
+        return $cards;
+    }
+
+    public function find(int $id): ?Card
+    {
+        $statement = $this->pdo->prepare('SELECT c.id, c.name, c.code, c.drop_chance, c.icon, c.description, c.created_at, r.code AS rarity_code, r.name AS rarity_name FROM cards c JOIN rarities r ON r.id = c.rarity_id WHERE c.id = :id');
+
+        $statement->execute([':id' => $id]);
+
+        $row = $statement->fetch();
+
+        if ($row === false) {
+            return null;
+        }
+
+        return $this->mapRowToCard($row);
+    }
+
+    private function mapRowToCard(array $row): Card
+    {
+        return new Card(
+            (int) $row['id'],
+            $row['name'],
+            $row['rarity_code'],
+            $row['rarity_name'],
+            $row['code'],
+            (float) $row['drop_chance'],
+            $row['icon'],
+            $row['description'],
+            $row['created_at']
+        );
     }
 }

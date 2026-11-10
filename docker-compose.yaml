@@ -25,18 +25,33 @@ services:
     networks:
       - pg-network
     volumes:
-      - ./docker/db:/docker-entrypoint-initdb.d
-  
+      - ./database:/docker-entrypoint-initdb.d
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   php:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
     command: sh -c "composer dump-autoload && exec php-fpm"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - .:/app
     networks:
       - pg-network
-  
+
 
   mailpit:
     image: axllent/mailpit:latest

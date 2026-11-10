@@ -82,27 +82,27 @@
                     </thead>
                     <tbody>
                         <?php foreach ($cards as $card): ?>
-                            <tr class="rarity-<?= htmlspecialchars($card['rarity']) ?>">
-                                <th scope="row"><span class="admin-table__id">#<?= htmlspecialchars($card['code']) ?></span></th>
+                            <tr class="rarity-<?= htmlspecialchars($card->getRarityCode()) ?>">
+                                <th scope="row"><span class="admin-table__id">#<?= htmlspecialchars($card->getCode()) ?></span></th>
                                 <td>
                                     <div class="admin-table__card">
                                         <span class="admin-table__icon">
-                                            <span class="icon" aria-hidden="true"><?= htmlspecialchars($card['icon']) ?></span>
+                                            <span class="icon" aria-hidden="true"><?= htmlspecialchars($card->getIcon()) ?></span>
                                         </span>
                                         <span class="admin-table__name">
-                                            <?= htmlspecialchars($card['name']) ?>
-                                            <?php if ($card['rarity'] === 'legendary'): ?>
+                                            <?= htmlspecialchars($card->getName()) ?>
+                                            <?php if ($card->getRarityCode() === 'legendary'): ?>
                                                 <span class="icon admin-table__star" aria-hidden="true">star</span>
                                             <?php endif; ?>
                                         </span>
                                     </div>
                                 </td>
-                                <td><span class="rarity-badge"><?= htmlspecialchars(ucfirst($card['rarity'])) ?></span></td>
-                                <td><span class="admin-table__value"><?= number_format($card['dropChance'], 1) ?>%</span></td>
+                                <td><span class="rarity-badge"><?= htmlspecialchars($card->getRarityName()) ?></span></td>
+                                <td><span class="admin-table__value"><?= number_format($card->getDropChance(), 1) ?>%</span></td>
                                 <td>
                                     <div class="admin-table__actions">
                                         <button class="admin-table__action admin-table__action--edit" type="button">Edit</button>
-                                        <form method="post" action="/admin/cards/<?= (int) $card['id'] ?>/delete">
+                                        <form method="post" action="/admin/cards/<?= (int) $card->getId() ?>/delete">
                                             <button class="admin-table__action admin-table__action--delete" type="submit">Delete</button>
                                         </form>
                                     </div>
@@ -127,7 +127,7 @@
                             <label for="card-rarity">Rarity</label>
                             <select id="card-rarity" name="rarity" required>
                                 <?php foreach ($rarities as $rarity): ?>
-                                    <option value="<?= htmlspecialchars($rarity) ?>"><?= htmlspecialchars(ucfirst($rarity)) ?></option>
+                                    <option value="<?= htmlspecialchars($rarity->getCode()) ?>"><?= htmlspecialchars($rarity->getName()) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -175,19 +175,19 @@
                     <tbody>
                         <?php foreach ($users as $user): ?>
                             <tr>
-                                <th scope="row"><span class="admin-table__id">#<?= (int) $user['id'] ?></span></th>
+                                <th scope="row"><span class="admin-table__id">#<?= (int) $user->getId() ?></span></th>
                                 <td>
                                     <div class="admin-table__user">
-                                        <span class="admin-table__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($user['username'], 0, 1))) ?></span>
-                                        <span class="admin-table__name"><?= htmlspecialchars($user['username']) ?></span>
+                                        <span class="admin-table__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($user->getUsername(), 0, 1))) ?></span>
+                                        <span class="admin-table__name"><?= htmlspecialchars($user->getUsername()) ?></span>
                                     </div>
                                 </td>
-                                <td><span class="admin-table__muted"><?= htmlspecialchars($user['email']) ?></span></td>
+                                <td><span class="admin-table__muted"><?= htmlspecialchars($user->getEmail()) ?></span></td>
                                 <td>
-                                    <form class="admin-table__role" method="post" action="/admin/users/<?= (int) $user['id'] ?>/role">
-                                        <select name="role" aria-label="Role for <?= htmlspecialchars($user['username']) ?>">
+                                    <form class="admin-table__role" method="post" action="/admin/users/<?= (int) $user->getId() ?>/role">
+                                        <select name="role" aria-label="Role for <?= htmlspecialchars($user->getUsername()) ?>">
                                             <?php foreach ($roles as $role): ?>
-                                                <option value="<?= htmlspecialchars($role) ?>"<?= $role === $user['role'] ? ' selected' : '' ?>>
+                                                <option value="<?= htmlspecialchars($role) ?>"<?= $role === $user->getRole() ? ' selected' : '' ?>>
                                                     <?= htmlspecialchars(ucfirst($role)) ?>
                                                 </option>
                                             <?php endforeach; ?>
@@ -214,15 +214,17 @@
                         <tr>
                             <th scope="col">Time</th>
                             <th scope="col">Level</th>
+                            <th scope="col">User</th>
                             <th scope="col">Message</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($logs as $log): ?>
                             <tr>
-                                <td><time class="admin-table__time" datetime="<?= htmlspecialchars($log['time']) ?>"><?= htmlspecialchars($log['time']) ?></time></td>
-                                <td><span class="log-badge log-badge--<?= htmlspecialchars($log['level']) ?>"><?= htmlspecialchars($log['level']) ?></span></td>
-                                <td><span class="admin-table__message"><?= htmlspecialchars($log['message']) ?></span></td>
+                                <td><time class="admin-table__time" datetime="<?= htmlspecialchars($log->getCreatedAt()->format('Y-m-d H:i:s')) ?>"><?= htmlspecialchars($log->getCreatedAt()->format('Y-m-d H:i')) ?></time></td>
+                                <td><span class="log-badge log-badge--<?= htmlspecialchars($log->getLevel()) ?>"><?= htmlspecialchars($log->getLevel()) ?></span></td>
+                                <td><?= htmlspecialchars($log->getUsername() ?? '-') ?></td>
+                                <td><span class="admin-table__message"><?= htmlspecialchars($log->getMessage()) ?></span></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

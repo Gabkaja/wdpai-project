@@ -36,4 +36,6 @@ RUN { \
       echo 'max_file_uploads = 20'; \
     } > /usr/local/etc/php/conf.d/mealplanner.ini
 
+COPY docker/php/zz-clear-env.conf /usr/local/etc/php-fpm.d/zz-clear-env.conf
+
 COPY . .

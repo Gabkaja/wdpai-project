@@ -78,8 +78,8 @@
                 </button>
                 <?php foreach ($rarities as $rarity): ?>
                     <button class="pill" type="button" aria-pressed="false">
-                        <span class="dot dot--rarity rarity-<?= htmlspecialchars($rarity) ?>" aria-hidden="true"></span>
-                        <?= htmlspecialchars(ucfirst($rarity)) ?> (<?= (int) ($rarityCounts[$rarity] ?? 0) ?>)
+                        <span class="dot dot--rarity rarity-<?= htmlspecialchars($rarity->getCode()) ?>" aria-hidden="true"></span>
+                        <?= htmlspecialchars($rarity->getName()) ?> (<?= (int) ($rarityCounts[$rarity->getCode()] ?? 0) ?>)
                     </button>
                 <?php endforeach; ?>
             </div>
