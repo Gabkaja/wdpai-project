@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Database;
 use App\Repository\CardRepository;
 use App\Repository\LogRepository;
+use App\Repository\RarityRepository;
 use App\Repository\UserRepository;
 
 final class AdminController extends AppController
@@ -14,6 +15,7 @@ final class AdminController extends AppController
     private CardRepository $cardRepository;
     private UserRepository $userRepository;
     private LogRepository $logRepository;
+    private RarityRepository $rarityRepository;
 
     public function __construct()
     {
@@ -21,6 +23,7 @@ final class AdminController extends AppController
         $this->cardRepository = new CardRepository($pdo);
         $this->userRepository = new UserRepository($pdo);
         $this->logRepository = new LogRepository($pdo);
+        $this->rarityRepository = new RarityRepository($pdo);
     }
 
     public function index(): void
@@ -28,7 +31,7 @@ final class AdminController extends AppController
         $this->render('admin', [
             'pageTitle' => 'Admin panel – StreamRip',
             'cards' => $this->cardRepository->all(),
-            'rarities' => ['common', 'rare', 'epic', 'legendary'],
+            'rarities' => $this->rarityRepository->all(),
             'roles' => ['viewer', 'admin'],
             'users' => $this->userRepository->all(),
             'logs' => $this->logRepository->latest(50),

@@ -127,7 +127,7 @@
                             <label for="card-rarity">Rarity</label>
                             <select id="card-rarity" name="rarity" required>
                                 <?php foreach ($rarities as $rarity): ?>
-                                    <option value="<?= htmlspecialchars($rarity) ?>"><?= htmlspecialchars(ucfirst($rarity)) ?></option>
+                                    <option value="<?= htmlspecialchars($rarity->getCode()) ?>"><?= htmlspecialchars($rarity->getName()) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
