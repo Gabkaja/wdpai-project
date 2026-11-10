@@ -36,4 +36,26 @@ final class UserRepository
 
         return $users;
     }
+
+    public function findById(int $id): ?User
+    {
+        $statement = $this->pdo->prepare('SELECT id, username, email, role, points, created_at FROM users WHERE id = :id');
+
+        $statement->execute([':id' => $id]);
+
+        $row = $statement->fetch();
+
+        if ($row === false) {
+            return null;
+        }
+
+        return new User(
+            (int) $row['id'],
+            $row['username'],
+            $row['email'],
+            $row['role'],
+            (int) $row['points'],
+            new DateTimeImmutable($row['created_at'])
+        );
+    }
 }

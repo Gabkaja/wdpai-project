@@ -12,10 +12,13 @@ use App\Controller\SecurityController;
 use App\Controller\AdminController;
 use App\Controller\OverlayController;
 use App\Repository\LogRepository;
+use App\Session;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 $routing = new Routing();
+
+Session::start();
 
 $routing->get('/', DefaultController::class, 'index');
 $routing->get('/about', AboutController::class, 'index');
