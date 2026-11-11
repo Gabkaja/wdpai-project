@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Database;
 use App\Repository\CardRepository;
 use App\Repository\RarityRepository;
+use App\Service\KickClient;
 
 final class DefaultController extends AppController
 {
@@ -32,17 +33,20 @@ final class DefaultController extends AppController
             $rarityCounts[$code] = ($rarityCounts[$code] ?? 0) + 1;
         }
 
+        $kickClient = new KickClient();
+        $isLive = $kickClient->isChannelLive('streamripofficial');
+
         $this->render('home', [
             'pageTitle' => 'StreamRip – Card Catalog',
             'stream' => [
-                'isLive' => true,
-                'title' => 'HUGE TCG CARD OPENING EDITION 1! 🔥 DROPPING LEGENDARIES FOR VIEWERS',
+                'isLive' => $isLive,
+                'title' => $isLive ? 'HUGE TCG CARD OPENING EDITION 1! 🔥 DROPPING LEGENDARIES FOR VIEWERS' : 'Stream is offline',
                 'channel' => 'kick.com/StreamRipOfficial',
                 'channelUrl' => 'https://kick.com/StreamRipOfficial',
                 'category' => 'TCG / Card Opening • Season 1',
-                'chatStatus' => 'Active',
-                'viewers' => 1420,
-                'server' => 'EU-Warsaw • Sync Pool #184',
+                'chatStatus' => $isLive ? 'Active' : 'Offline',
+                'viewers' => $isLive ? 1420 : 0,
+                'server' => $isLive ? 'EU-Warsaw • Sync Pool #184' : '—',
             ],
             'cards' => $cards,
             'rarities' => $rarities,
