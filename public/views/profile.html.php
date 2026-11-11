@@ -12,15 +12,8 @@
                     <span class="profile-hero__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($username, 0, 1))) ?></span>
                     <div>
                         <h1 class="profile-hero__name" id="profile-title">Profile of <?= htmlspecialchars($username) ?></h1>
-                        <span class="badge badge--live profile-hero__badge">
-                            <span class="icon" aria-hidden="true">verified</span>
-                            Connected with Kick
-                        </span>
                         <ul class="profile-hero__meta" role="list">
                             <li><span class="icon" aria-hidden="true">calendar_month</span> Collector since: <?= htmlspecialchars($memberSince) ?></li>
-                            <li><span class="icon" aria-hidden="true">tag</span> ID: #<?= str_pad((string) (int) ($stats['userId'] ?? 0), 4, '0', STR_PAD_LEFT) ?>-TCG</li>
-                            <li><span class="icon" aria-hidden="true">bolt</span> Season 3 Active</li>
-                            <li><span class="icon" aria-hidden="true">auto_awesome</span> Booster x2</li>
                         </ul>
                     </div>
                 </div>
@@ -89,18 +82,6 @@
                     </div>
                     <p class="stat-card__value"><?= (int) $packsOpened ?></p>
                     <p class="stat-card__note">Total pack openings</p>
-                </article>
-
-                <article class="stat-card stat-card--signature">
-                    <div class="stat-card__head">
-                        <span>Signature</span>
-                        <span class="icon" aria-hidden="true">favorite</span>
-                    </div>
-                    <p class="stat-card__value">Favorite card: <?= htmlspecialchars($stats['favoriteCard'] ?? '—') ?></p>
-                    <p class="stat-card__note">
-                        <span class="icon" aria-hidden="true">military_tech</span>
-                        Legendary mint 10
-                    </p>
                 </article>
             </div>
         </section>
@@ -186,33 +167,6 @@
                         Last redeemed: <strong>STREAM-HYPER-24</strong>
                         <span class="profile-panel__success">Success (+1 pack)</span>
                     </p>
-                </section>
-
-                <section class="profile-panel" aria-labelledby="security-heading">
-                    <div class="profile-panel__head">
-                        <h2 class="profile-panel__title" id="security-heading">
-                            <span class="icon" aria-hidden="true">shield</span>
-                            Status &amp; security
-                        </h2>
-                    </div>
-
-                    <ul class="status-list" role="list">
-                        <li>
-                            <span class="icon" aria-hidden="true">verified_user</span>
-                            <span class="status-list__label">2FA Verification</span>
-                            <span class="status-list__badge">Active</span>
-                        </li>
-                        <li>
-                            <span class="icon" aria-hidden="true">workspace_premium</span>
-                            <span class="status-list__label">VIP Stream Supporter</span>
-                            <span class="status-list__badge">Tier 3</span>
-                        </li>
-                        <li>
-                            <span class="icon" aria-hidden="true">swap_horiz</span>
-                            <span class="status-list__label">P2P Trading</span>
-                            <span class="status-list__badge">Unlocked</span>
-                        </li>
-                    </ul>
                 </section>
 
                 <?php if ($kickAccount !== null): ?>
