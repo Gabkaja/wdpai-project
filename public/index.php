@@ -12,6 +12,7 @@ use App\Controller\SecurityController;
 use App\Controller\AdminController;
 use App\Controller\OverlayController;
 use App\Controller\KickController;
+use App\Controller\PackController;
 use App\Repository\LogRepository;
 use App\Session;
 
@@ -38,6 +39,8 @@ $routing->get('/profile/kick/connect', KickController::class, 'connect');
 $routing->get('/auth/kick/callback', KickController::class, 'callback');
 $routing->post('/profile/kick/unlink', KickController::class, 'unlink');
 $routing->post('/logout', SecurityController::class, 'logout');
+$routing->post('/packs/open', PackController::class, 'open');
+$routing->get('/packs/{id}', PackController::class, 'show');
 
 try {
     $routeFound = $routing->dispatch(

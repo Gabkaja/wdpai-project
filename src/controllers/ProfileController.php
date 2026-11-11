@@ -6,20 +6,32 @@ namespace App\Controller;
 
 use App\Database;
 use App\Repository\CardRepository;
+use App\Repository\CollectionRepository;
 use App\Repository\KickAccountRepository;
+use App\Repository\PackRepository;
 
 final class ProfileController extends AppController
 {
-    private const OWNED_CARD_IDS = [1, 3, 5, 7];
-
     public function index(): void
     {
         $user = $this->requireLogin();
 
         $pdo = (new Database())->connect();
-        $cards = (new CardRepository($pdo))->all();
-        $ownedIds = self::OWNED_CARD_IDS;
+        $packRepository = new PackRepository($pdo, new \App\Repository\LogRepository($pdo));
+        $collectionRepository = new CollectionRepository($pdo);
         $kickAccount = (new KickAccountRepository($pdo))->findByUserId($user->getId());
+        $settings = $packRepository->settings();
+        $collection = $collectionRepository->forUser($user->getId());
+        $recentOpenings = $packRepository->recentByUser($user->getId(), 5);
+
+        $totalCards = 0;
+        $uniqueCards = count($collection);
+
+        foreach ($collection as $item) {
+            $totalCards += $item->getQuantity();
+        }
+
+        $packsOpened = count($recentOpenings);
 
         $this->render('profile', [
             'pageTitle' => 'My profile – StreamRip',
@@ -28,13 +40,17 @@ final class ProfileController extends AppController
             'points' => $user->getPoints(),
             'memberSince' => $user->getCreatedAt()->format('F Y'),
             'stats' => [
-                'totalCards' => count($ownedIds),
-                'completion' => (int) round(count($ownedIds) / count($cards) * 100),
+                'userId' => $user->getId(),
+                'totalCards' => $totalCards,
+                'uniqueCards' => $uniqueCards,
+                'packsOpened' => $packsOpened,
+                'completion' => $uniqueCards > 0 ? (int) round($uniqueCards / 8 * 100) : 0,
                 'rank' => 12,
                 'favoriteCard' => 'System Annihilator',
             ],
-            'cards' => $cards,
-            'ownedIds' => $ownedIds,
+            'collection' => $collection,
+            'recentOpenings' => $recentOpenings,
+            'packSettings' => $settings,
             'kickAccount' => $kickAccount,
         ]);
     }

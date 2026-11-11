@@ -212,6 +212,21 @@ final class PackRepository
         return $opening;
     }
 
+    public function settings(): array
+    {
+        $statement = $this->pdo->query('SELECT cards_per_pack, cost_points FROM pack_settings WHERE id = 1');
+        $row = $statement->fetch();
+
+        if ($row === false) {
+            return ['cards_per_pack' => 4, 'cost_points' => 100];
+        }
+
+        return [
+            'cards_per_pack' => (int) $row['cards_per_pack'],
+            'cost_points' => (int) $row['cost_points'],
+        ];
+    }
+
     public function recentByUser(int $userId, int $limit): array
     {
         $statement = $this->pdo->prepare('
@@ -224,6 +239,7 @@ final class PackRepository
             LEFT JOIN rarities r ON r.id = c.rarity_id
             WHERE po.user_id = :user_id
             ORDER BY po.opened_at DESC, po.id DESC, poc.slot
+            LIMIT :limit
         ');
         $statement->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -259,8 +275,6 @@ final class PackRepository
             }
         }
 
-        usort($openings, fn(PackOpening $a, PackOpening $b) => $b->getOpenedAt() <=> $a->getOpenedAt());
-
-        return array_slice(array_values($openings), 0, $limit);
+        return array_values($openings);
     }
 }
