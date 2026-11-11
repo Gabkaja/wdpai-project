@@ -24,8 +24,6 @@
                 <form class="auth-form" method="post" action="/register">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 
-                    <p class="auth-form__divider"><span>Or via email</span></p>
-
                     <?php if (!empty($errors['__global'])): ?>
                         <div class="auth-alert" role="alert">
                             <span class="icon" aria-hidden="true">error</span>
