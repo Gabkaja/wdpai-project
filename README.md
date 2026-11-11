@@ -9,8 +9,9 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 |---|---|
 | Home | Stream banner, live stats and a card catalog with rarity filters |
 | Card catalog | All cards (`/cards`) and card details (`/cards/{id}`) |
-| Profile | Collection stats and owned cards (requires login); avatar upload and promo code forms have no POST routes yet |
-| Leaderboard | Podium and the full collector ranking |
+| Profile | Collection stats, owned cards and pack opening form (requires login); avatar upload and promo code forms have no POST routes yet |
+| Pack opening | Open a booster pack (`/packs/open`, POST, requires login); view opening result (`/packs/{id}`, GET, owner only). Points are deducted in a single transaction and results are stored per user |
+| Leaderboard | Podium and the full collector ranking, including packs opened per user |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
 | Kick login | Log in with Kick (OAuth 2.1 + PKCE) and link/unlink Kick account from profile |
@@ -82,9 +83,12 @@ src/Session.php               # native PHP session management (start, login, log
 src/Service/                  # external service clients
 src/Service/KickClient.php    # Kick OAuth 2.1 client (authorize URL, token exchange, current user)
 src/Repository/               # data sources (App\Repository namespace)
+src/Repository/PackRepository.php   # pack opening transaction, opening history and settings
 src/Repository/KickAccountRepository.php   # kick_accounts table access
 database/                     # numbered SQL scripts (schema, views, seed data)
 database/04-kick-accounts.sql # kick_accounts table
+database/05-packs.sql         # pack_settings, pack_openings, pack_opening_cards tables and rarity drop weights
+database/06-leaderboard-packs.sql # leaderboard_view with packs_opened column
 docker/                       # nginx, php and db configuration
 ```
 
@@ -126,8 +130,11 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 | GET | `/register` | public | `SecurityController::register` |
 | POST | `/register` | public | `SecurityController::registerSubmit` |
 | GET | `/admin` | admin | `AdminController::index` |
+| POST | `/admin/users/{id}/points` | admin | `AdminController::grantPoints` |
 | GET | `/overlay` | public | `OverlayController::index` |
 | POST | `/logout` | logged in | `SecurityController::logout` |
+| POST | `/packs/open` | logged in | `PackController::open` |
+| GET | `/packs/{id}` | logged in (owner only) | `PackController::show` |
 | GET | `/auth/kick/login` | public | `KickController::login` |
 | GET | `/auth/kick/callback` | public | `KickController::callback` |
 | GET | `/profile/kick/connect` | logged in | `KickController::connect` |
@@ -137,7 +144,7 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 
 The project is under active development. Known placeholders:
 
-- **Profile forms** — the avatar upload and promo code forms on `/profile` have no POST routes yet (they render but cannot be submitted).
+- **Profile forms** — the pack opening form on `/profile` has a POST route (`POST /packs/open`); the avatar upload and promo code forms still render but cannot be submitted.
 - **Role change in admin panel** — the admin panel lists roles (`viewer`, `admin`) but changing a user's role has no POST route yet.
 - **Shared layout** — views are rendered inside `public/views/layout.html.php`, which includes the `header` and `footer` partials. Views do not call them directly.
 - **Numeric route parameters only** (`\d+`).
@@ -226,6 +233,48 @@ The foreign key uses `ON DELETE CASCADE`: when a StreamRip user is deleted, thei
 Kick points / balance are not available through the public API used here, so they are not fetched or displayed.
 
 
+### Pack opening
+
+Opening a booster pack is a single database transaction in `PackRepository::open()`:
+
+1. `beginTransaction()`.
+2. `SELECT points FROM users WHERE id = :id FOR UPDATE` — locks the user's row so concurrent pack openings on the same account are serialized. If the user does not exist, throws `\DomainException('user_not_found')`.
+3. Reads `cards_per_pack` and `cost_points` from `pack_settings` (single row, `id = 1`). If missing, throws `\DomainException('pack_not_configured')`.
+4. If the user's points are below `cost_points`, throws `\DomainException('insufficient_points')` — no points are spent and no opening is recorded.
+5. Draws rarity by weight from `rarities` where `drop_weight > 0`, then draws a random card of that rarity. Repeats `cards_per_pack` times. Cards may repeat.
+6. `UPDATE users SET points = points - :cost WHERE id = :id`.
+7. `INSERT INTO pack_openings (user_id, points_spent) VALUES (...) RETURNING id`.
+8. Inserts one row per drawn card into `pack_opening_cards` (slot 1..N).
+9. `INSERT INTO user_cards ... ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1`.
+10. Writes an `info` entry to `system_logs` on the same PDO connection so the log is part of the transaction.
+11. `commit()`.
+
+**Why `FOR UPDATE`**: without the row lock, two concurrent pack openings could both read the same points balance, both pass the balance check, and both deduct points — resulting in an overdraft. The lock serializes the check-and-deduct for one user.
+
+**Error handling**: every `\Throwable` triggers `rollBack()` (if still in transaction) and re-throws the exception. The central handler in `public/index.php` logs it to `system_logs` and shows a 500 page; `DomainException` cases (`insufficient_points`, `pack_not_configured`, `user_not_found`) are caught in `PackController::open()` and turned into a flash message with a redirect to `/profile`.
+
+**Randomness**: rarity is chosen by cumulative weight using `random_int(1, $totalWeight)`; the card within the rarity is chosen by `random_int(0, count($cards) - 1)`. `rand()`/`mt_rand()` are never used.
+
+### Tuning packs
+
+Pack parameters live in the database, not in PHP. Adjust them with SQL:
+
+```sql
+-- Change pack cost (points) and number of cards per pack
+UPDATE pack_settings SET cards_per_pack = 5, cost_points = 150 WHERE id = 1;
+
+-- Change rarity drop weights (sum should stay 100 for percentage-like distribution)
+UPDATE rarities SET drop_weight = 50 WHERE code = 'common';
+UPDATE rarities SET drop_weight = 30 WHERE code = 'rare';
+UPDATE rarities SET drop_weight = 15 WHERE code = 'epic';
+UPDATE rarities SET drop_weight = 5 WHERE code = 'legendary';
+
+-- Make a rarity never drop (weight 0 means it is skipped)
+UPDATE rarities SET drop_weight = 0 WHERE code = 'legendary';
+```
+
+After changing weights, verify the total: `SELECT code, drop_weight FROM rarities ORDER BY sort_order;`.
+
 ### Entity-relationship diagram
 
 ```mermaid
@@ -233,7 +282,9 @@ erDiagram
     rarities ||--o{ cards : contains
     users ||--o{ user_cards : owns
     users ||--o{ system_logs : generates
-    cards ||--o{ user_cards : collected_in
+    users ||--o{ pack_openings : opens
+    pack_openings ||--|{ pack_opening_cards : contains
+    cards ||--o{ pack_opening_cards : appears_in
     cards ||--o{ system_logs : referenced_in
     users ||--|{ kick_accounts : links
 
@@ -242,6 +293,7 @@ erDiagram
         varchar code UK
         varchar name
         smallint sort_order UK
+        int drop_weight
     }
     users {
         bigint id PK
@@ -251,6 +303,22 @@ erDiagram
         varchar role
         int points
         timestamptz created_at
+    }
+    pack_settings {
+        smallint id PK
+        smallint cards_per_pack
+        int cost_points
+    }
+    pack_openings {
+        bigint id PK
+        bigint user_id FK
+        int points_spent
+        timestamptz opened_at
+    }
+    pack_opening_cards {
+        bigint opening_id PK,FK
+        smallint slot PK
+        bigint card_id FK
     }
     cards {
         bigint id PK
@@ -292,13 +360,16 @@ erDiagram
 | `user_cards.card_id` → `cards.id` | `cards` | `RESTRICT` | A card cannot be removed while a user still owns it. |
 | `cards.rarity_id` → `rarities.id` | `rarities` | `RESTRICT` | A rarity is a dictionary value; it cannot be deleted while cards reference it. |
 | `system_logs.user_id` → `users.id` | `users` | `SET NULL` | Event history must survive user deletion; the user reference becomes NULL. |
+| `pack_openings.user_id` → `users.id` | `users` | `CASCADE` | A pack opening record belongs to its opener; removing the user removes their opening history. |
+| `pack_opening_cards.opening_id` → `pack_openings.id` | `pack_openings` | `CASCADE` | Opening cards make no sense without the opening record they came from. |
+| `pack_opening_cards.card_id` → `cards.id` | `cards` | `RESTRICT` | A card cannot be removed while an opening record references it. |
 | `kick_accounts.user_id` → `users.id` | `users` | `CASCADE` | Removing a StreamRip user also removes their Kick link. |
 
 `ON UPDATE` is the default (no action) everywhere because primary keys are `GENERATED ALWAYS AS IDENTITY` and never change.
 
 ### `leaderboard_view`
 
-Defined in `database/02-views.sql`. Aggregates each user's total card quantity, unique card count, join date, and rarest card (highest rarity sort order, lowest card id on ties), and assigns a `RANK()` position ordered by total cards descending, then unique cards descending. Used by `LeaderboardController` via `LeaderboardRepository::all()` on the `/leaderboard` route. The view intentionally has no `ORDER BY`; sorting is applied by the repository query.
+Defined in `database/02-views.sql` and extended by `database/06-leaderboard-packs.sql`. Aggregates each user's total card quantity, unique card count, join date, rarest card (highest rarity sort order, lowest card id on ties), packs opened (correlated count from `pack_openings`), and assigns a `RANK()` position ordered by total cards descending, then unique cards descending. Used by `LeaderboardController` via `LeaderboardRepository::all()` on the `/leaderboard` route. The view intentionally has no `ORDER BY`; sorting is applied by the repository query.
 
 ### Route → repository method → SQL
 
@@ -314,6 +385,9 @@ Defined in `database/02-views.sql`. Aggregates each user's total card quantity, 
 | `GET /admin` | `AdminController::index` | `LogRepository::latest(50)` | `SELECT l.id, l.level, l.message, u.username, l.created_at FROM system_logs l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.created_at DESC, l.id DESC LIMIT :limit` |
 | `GET /admin` | `AdminController::index` | `RarityRepository::all()` | Rarity query |
 | Error 500 | `public/index.php` catch | `LogRepository::add()` | `INSERT INTO system_logs (level, message, context, user_id) VALUES (:level, :message, CAST(:context AS JSONB), :user_id)` |
+| `POST /packs/open` | `PackController::open` | `PackRepository::open(int)` | `SELECT points FROM users WHERE id = :id FOR UPDATE`, `SELECT cards_per_pack, cost_points FROM pack_settings`, `UPDATE users SET points = points - :cost`, `INSERT INTO pack_openings ... RETURNING id`, `INSERT INTO pack_opening_cards`, `INSERT INTO user_cards ... ON CONFLICT`, `LogRepository::add()` |
+| `GET /packs/{id}` | `PackController::show` | `PackRepository::findOpening(int)`, `PackRepository::settings()` | `SELECT ... FROM pack_openings po JOIN pack_opening_cards poc ... JOIN cards c ... JOIN rarities r ... WHERE po.id = :id ORDER BY poc.slot`, `SELECT cards_per_pack, cost_points FROM pack_settings WHERE id = 1` |
+| `POST /admin/users/{id}/points` | `AdminController::grantPoints` | `UserRepository::addPoints(int, int)`, `LogRepository::add()` | `UPDATE users SET points = points + :amount WHERE id = :id`, `INSERT INTO system_logs ...` |
 
 ### Configuration
 
