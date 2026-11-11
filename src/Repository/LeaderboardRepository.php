@@ -19,7 +19,7 @@ final class LeaderboardRepository
 
     public function all(): array
     {
-        $statement = $this->pdo->query('SELECT user_id, username, total_cards, unique_cards, rank_position, joined_at, rarest_card_name FROM leaderboard_view ORDER BY rank_position, username');
+        $statement = $this->pdo->query('SELECT user_id, username, total_cards, unique_cards, rank_position, joined_at, rarest_card_name, packs_opened FROM leaderboard_view ORDER BY rank_position, username');
 
         $entries = [];
 
@@ -39,7 +39,8 @@ final class LeaderboardRepository
             (int) $row['unique_cards'],
             (int) $row['rank_position'],
             new DateTimeImmutable($row['joined_at']),
-            $row['rarest_card_name']
+            $row['rarest_card_name'],
+            (int) $row['packs_opened']
         );
     }
 }

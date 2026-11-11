@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Database;
+use App\Model\User;
 use App\Repository\CardRepository;
 use App\Repository\LogRepository;
 use App\Repository\RarityRepository;
 use App\Repository\UserRepository;
+use App\Session;
 
 final class AdminController extends AppController
 {
@@ -44,5 +46,34 @@ final class AdminController extends AppController
             ],
             'currentUser' => $user,
         ]);
+    }
+
+    public function grantPoints(int $id): void
+    {
+        $this->requireRole('admin');
+        $this->verifyCsrfOrAbort();
+
+        $amount = filter_var($_POST['amount'] ?? null, FILTER_VALIDATE_INT);
+
+        if ($amount === false || $amount === null || $amount === 0 || $amount < -100000 || $amount > 100000) {
+            Session::flash('error', 'Invalid points amount.');
+            $this->redirect('/admin');
+        }
+
+        $admin = $this->currentUser();
+
+        try {
+            $this->userRepository->addPoints($id, $amount);
+            $this->logRepository->add('info', 'Admin granted points', [
+                'admin_id' => $admin->getId(),
+                'target_user_id' => $id,
+                'amount' => $amount,
+            ], $admin->getId());
+            Session::flash('success', 'Points updated.');
+        } catch (\DomainException $exception) {
+            Session::flash('error', $exception->getMessage() === 'points_out_of_range' ? 'Points out of range.' : 'User not found.');
+        }
+
+        $this->redirect('/admin');
     }
 }

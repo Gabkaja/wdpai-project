@@ -176,6 +176,7 @@
                             <th scope="col">Username</th>
                             <th scope="col">E-mail</th>
                             <th scope="col">Role</th>
+                            <th scope="col">Points</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -199,6 +200,14 @@
                                             <?php endforeach; ?>
                                         </select>
                                         <button class="button button--secondary admin-table__save" type="submit">Save</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <span class="admin-table__points-value"><?= (int) $user->getPoints() ?></span>
+                                    <form class="admin-table__points" method="post" action="/admin/users/<?= (int) $user->getId() ?>/points">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="number" name="amount" min="-100000" max="100000" step="1" required>
+                                        <button class="button button--secondary admin-table__save" type="submit">Set</button>
                                     </form>
                                 </td>
                             </tr>

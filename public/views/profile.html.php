@@ -12,34 +12,31 @@
                     <span class="profile-hero__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($username, 0, 1))) ?></span>
                     <div>
                         <h1 class="profile-hero__name" id="profile-title">Profile of <?= htmlspecialchars($username) ?></h1>
-                        <span class="badge badge--live profile-hero__badge">
-                            <span class="icon" aria-hidden="true">verified</span>
-                            Connected with Kick
-                        </span>
                         <ul class="profile-hero__meta" role="list">
-                            <li><span class="icon" aria-hidden="true">calendar_month</span> Collector since: September 2024</li>
-                            <li><span class="icon" aria-hidden="true">tag</span> ID: #9482-TCG</li>
-                            <li><span class="icon" aria-hidden="true">bolt</span> Season 3 Active</li>
-                            <li><span class="icon" aria-hidden="true">auto_awesome</span> Booster x2</li>
+                            <li><span class="icon" aria-hidden="true">calendar_month</span> Collector since: <?= htmlspecialchars($memberSince) ?></li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="profile-hero__valuation">
-                    <span class="profile-hero__valuation-label">Inventory valuation</span>
-                    <span class="profile-hero__valuation-value">4,820 <span>PLN</span></span>
+                    <span class="profile-hero__valuation-label">Points balance</span>
+                    <span class="profile-hero__valuation-value"><?= (int) $points ?></span>
                     <span class="profile-hero__valuation-delta">
                         <span class="icon" aria-hidden="true">trending_up</span>
-                        +340 PLN this week
+                        StreamRip points
                     </span>
                 </div>
             </div>
         </section>
 
         <?php
-        $ownedCount = count($ownedIds);
-        $lockedCount = count($cards) - $ownedCount;
-        $mintGrades = ['common' => '8.8', 'rare' => '8.9', 'epic' => '9.5', 'legendary' => '10'];
+        $totalCards = $stats['totalCards'] ?? 0;
+        $uniqueCards = $stats['uniqueCards'] ?? 0;
+        $packsOpened = $stats['packsOpened'] ?? 0;
+        $completion = $stats['completion'] ?? 0;
+        $cardsPerPack = $packSettings['cards_per_pack'] ?? 4;
+        $costPoints = $packSettings['cost_points'] ?? 100;
+        $canAfford = (int) $points >= $costPoints;
         ?>
 
         <section class="profile-stats" aria-labelledby="stats-heading">
@@ -57,10 +54,10 @@
                         <span>Collection</span>
                         <span class="icon" aria-hidden="true">inventory_2</span>
                     </div>
-                    <p class="stat-card__value">Cards collected: <strong><?= (int) $stats['totalCards'] ?></strong></p>
+                    <p class="stat-card__value">Cards collected: <strong><?= (int) $totalCards ?></strong></p>
                     <div class="progress">
                         <span class="progress__track">
-                            <span class="progress__bar" style="width: <?= (int) $stats['completion'] ?>%"></span>
+                            <span class="progress__bar" style="width: <?= (int) $completion ?>%"></span>
                         </span>
                     </div>
                 </article>
@@ -70,39 +67,60 @@
                         <span>Completion</span>
                         <span class="icon" aria-hidden="true">donut_large</span>
                     </div>
-                    <p class="stat-card__value">Collection completion: <?= (int) $stats['completion'] ?>%</p>
+                    <p class="stat-card__value">Collection completion: <?= (int) $completion ?>%</p>
                     <div class="progress">
                         <span class="progress__track">
-                            <span class="progress__bar" style="width: <?= (int) $stats['completion'] ?>%"></span>
+                            <span class="progress__bar" style="width: <?= (int) $completion ?>%"></span>
                         </span>
                     </div>
                 </article>
 
                 <article class="stat-card stat-card--standing">
                     <div class="stat-card__head">
-                        <span>Standing</span>
-                        <span class="icon" aria-hidden="true">leaderboard</span>
+                        <span>Packs opened</span>
+                        <span class="icon" aria-hidden="true">card_today</span>
                     </div>
-                    <p class="stat-card__value">Community rank: #<?= (int) $stats['rank'] ?></p>
-                    <p class="stat-card__note">Top 2% of players</p>
-                </article>
-
-                <article class="stat-card stat-card--signature">
-                    <div class="stat-card__head">
-                        <span>Signature</span>
-                        <span class="icon" aria-hidden="true">favorite</span>
-                    </div>
-                    <p class="stat-card__value">Favorite card: <?= htmlspecialchars($stats['favoriteCard']) ?></p>
-                    <p class="stat-card__note">
-                        <span class="icon" aria-hidden="true">military_tech</span>
-                        Legendary mint 10
-                    </p>
+                    <p class="stat-card__value"><?= (int) $packsOpened ?></p>
+                    <p class="stat-card__note">Total pack openings</p>
                 </article>
             </div>
         </section>
 
         <div class="profile-layout">
             <div class="profile-sidebar">
+                <section class="profile-panel" aria-labelledby="open-pack-heading">
+                    <div class="profile-panel__head">
+                        <h2 class="profile-panel__title" id="open-pack-heading">
+                            <span class="icon" aria-hidden="true">card_today</span>
+                            Open pack
+                        </h2>
+                    </div>
+
+                    <div class="profile-panel__text">
+                        <span class="pack-cost">
+                            <span class="icon" aria-hidden="true">attach_money</span>
+                            Cost: <strong><?= (int) $costPoints ?></span> points
+                        </span>
+                        <span class="pack-balance">
+                            <span class="icon" aria-hidden="true">account_balance_wallet</span>
+                            Your balance: <strong><?= (int) $points ?></span> points
+                        </span>
+                    </div>
+
+                    <form class="profile-panel__form" method="post" action="/packs/open">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                        <button class="button button--primary" type="submit"<?= !$canAfford ? ' disabled aria-disabled="true"' : '' ?>>
+                            <span class="icon" aria-hidden="true">bolt</span>
+                            Open pack (<?= (int) $cardsPerPack ?> cards)
+                        </button>
+                        <?php if (!$canAfford): ?>
+                            <p class="profile-panel__text profile-panel__status" role="status" aria-live="polite">
+                                Not enough points to open a pack.
+                            </p>
+                        <?php endif; ?>
+                    </form>
+                </section>
+
                 <section class="profile-panel" aria-labelledby="avatar-heading">
                     <div class="profile-panel__head">
                         <h2 class="profile-panel__title" id="avatar-heading">
@@ -149,33 +167,6 @@
                         Last redeemed: <strong>STREAM-HYPER-24</strong>
                         <span class="profile-panel__success">Success (+1 pack)</span>
                     </p>
-                </section>
-
-                <section class="profile-panel" aria-labelledby="security-heading">
-                    <div class="profile-panel__head">
-                        <h2 class="profile-panel__title" id="security-heading">
-                            <span class="icon" aria-hidden="true">shield</span>
-                            Status &amp; security
-                        </h2>
-                    </div>
-
-                    <ul class="status-list" role="list">
-                        <li>
-                            <span class="icon" aria-hidden="true">verified_user</span>
-                            <span class="status-list__label">2FA Verification</span>
-                            <span class="status-list__badge">Active</span>
-                        </li>
-                        <li>
-                            <span class="icon" aria-hidden="true">workspace_premium</span>
-                            <span class="status-list__label">VIP Stream Supporter</span>
-                            <span class="status-list__badge">Tier 3</span>
-                        </li>
-                        <li>
-                            <span class="icon" aria-hidden="true">swap_horiz</span>
-                            <span class="status-list__label">P2P Trading</span>
-                            <span class="status-list__badge">Unlocked</span>
-                        </li>
-                    </ul>
                 </section>
 
                 <?php if ($kickAccount !== null): ?>
@@ -237,71 +228,68 @@
                 </div>
 
                 <div class="collection-filters" role="group" aria-label="Collection filters">
-                    <button class="pill" type="button" aria-pressed="true">All <?= count($cards) ?></button>
-                    <button class="pill" type="button" aria-pressed="false">Owned <?= $ownedCount ?></button>
-                    <button class="pill" type="button" aria-pressed="false">Locked <?= $lockedCount ?></button>
-                    <button class="pill rarity-legendary" type="button" aria-pressed="false"><span class="dot" aria-hidden="true"></span> Legendary</button>
-                    <button class="pill rarity-epic" type="button" aria-pressed="false"><span class="dot" aria-hidden="true"></span> Epic</button>
-                    <button class="pill rarity-rare" type="button" aria-pressed="false"><span class="dot" aria-hidden="true"></span> Rare</button>
+                    <button class="pill" type="button" aria-pressed="true">All <?= $uniqueCards ?></button>
+                    <button class="pill" type="button" aria-pressed="false">Owned <?= $uniqueCards ?></button>
                 </div>
 
                 <ul class="collection-grid" role="list">
-                    <?php foreach ($cards as $card): ?>
-                        <?php $isOwned = in_array($card->getId(), $ownedIds, true); ?>
+                    <?php foreach ($collection as $item): ?>
+                        <?php $card = $item->getCard(); ?>
                         <li>
-                            <?php if ($isOwned): ?>
-                                    <article class="collection-card rarity-<?= htmlspecialchars($card->getRarityCode()) ?>">
-                                    <div class="collection-card__media">
-                                        <span class="collection-card__code">#<?= htmlspecialchars($card->getCode()) ?></span>
-                                        <span class="collection-card__owned">1x owned</span>
-                                        <span class="collection-card__icon">
-                                            <span class="icon" aria-hidden="true"><?= htmlspecialchars($card->getIcon()) ?></span>
-                                        </span>
-                                        <span class="collection-card__mint">Mint <?= htmlspecialchars($mintGrades[$card->getRarityCode()] ?? '—') ?></span>
+                            <article class="collection-card rarity-<?= htmlspecialchars($card->getRarityCode()) ?>">
+                                <div class="collection-card__media">
+                                    <span class="collection-card__code">#<?= htmlspecialchars($card->getCode()) ?></span>
+                                    <span class="collection-card__owned"><?= (int) $item->getQuantity() ?>x owned</span>
+                                    <span class="collection-card__icon">
+                                        <span class="icon" aria-hidden="true"><?= htmlspecialchars($card->getIcon()) ?></span>
+                                    </span>
+                                </div>
+                                <div class="collection-card__body">
+                                    <span class="collection-card__rarity"><?= htmlspecialchars(ucfirst($card->getRarityCode())) ?></span>
+                                    <h3 class="collection-card__name">
+                                        <a href="/cards/<?= (int) $card->getId() ?>"><?= htmlspecialchars($card->getName()) ?></a>
+                                    </h3>
+                                    <div class="collection-card__footer">
+                                        <span>Rarity: <?= htmlspecialchars(ucfirst($card->getRarityCode())) ?></span>
+                                        <span>Acquired: <?= $item->getAcquiredAt()->format('Y-m-d') ?></span>
                                     </div>
-                                    <div class="collection-card__body">
-                                        <span class="collection-card__rarity"><?= htmlspecialchars(ucfirst($card->getRarityCode())) ?></span>
-                                            <h3 class="collection-card__name">
-                                                <a href="/cards/<?= (int) $card->getId() ?>"><?= htmlspecialchars($card->getName()) ?></a>
-                                        </h3>
-                                        <div class="collection-card__footer">
-                                            <span>Rarity: <?= htmlspecialchars(ucfirst($card->getRarityCode())) ?></span>
-                                            <a class="collection-card__view" href="/cards/<?= (int) $card->getId() ?>">
-                                                <span class="icon" aria-hidden="true">visibility</span>
-                                                View
-                                            </a>
-                                        </div>
-                                    </div>
-                                </article>
-                            <?php else: ?>
-                                <article class="collection-card collection-card--locked" aria-label="Locked card">
-                                    <div class="collection-card__media">
-                                        <span class="collection-card__code">Locked (#<?= htmlspecialchars($card->getCode()) ?>)</span>
-                                        <span class="icon" aria-hidden="true">lock</span>
-                                    </div>
-                                    <div class="collection-card__body">
-                                        <span class="collection-card__rarity">Tier ???</span>
-                                        <h3 class="collection-card__name">???</h3>
-                                        <p class="collection-card__locked">Not collected yet.</p>
-                                    </div>
-                                </article>
-                            <?php endif; ?>
+                                </div>
+                            </article>
                         </li>
                     <?php endforeach; ?>
                 </ul>
 
+                <?php if ($uniqueCards === 0): ?>
+                    <p class="collection-grid__empty">No cards yet. Open a pack to start your collection.</p>
+                <?php endif; ?>
+
                 <div class="collection-footer">
-                    <p>Showing <?= count($cards) ?> of <?= count($cards) ?> cards in collection</p>
-                    <nav class="pagination" aria-label="Collection pagination">
-                        <span class="pagination__link pagination__link--arrow pagination__link--disabled" aria-disabled="true">
-                            <span class="icon" aria-hidden="true">chevron_left</span>
-                        </span>
-                        <span class="pagination__link" aria-current="page">1/1</span>
-                        <span class="pagination__link pagination__link--arrow pagination__link--disabled" aria-disabled="true">
-                            <span class="icon" aria-hidden="true">chevron_right</span>
-                        </span>
-                    </nav>
+                    <p>Showing <?= $uniqueCards ?> unique card<?= $uniqueCards !== 1 ? 's' : '' ?> (<?= (int) $totalCards ?> total)</p>
                 </div>
             </section>
+
+            <?php if ($recentOpenings): ?>
+                <section class="profile-panel profile-recent" aria-labelledby="recent-heading">
+                    <div class="profile-panel__head">
+                        <h2 class="profile-panel__title" id="recent-heading">
+                            <span class="icon" aria-hidden="true">history</span>
+                            Recent pack openings
+                        </h2>
+                    </div>
+
+                    <ul class="recent-list" role="list">
+                        <?php foreach ($recentOpenings as $opening): ?>
+                            <li class="recent-list__item">
+                                <span class="recent-list__date"><?= htmlspecialchars($opening->getOpenedAt()->format('Y-m-d H:i')) ?></span>
+                                <span class="recent-list__cost"><?= (int) $opening->getPointsSpent() ?> pts</span>
+                                <a class="recent-list__link" href="/packs/<?= (int) $opening->getId() ?>">
+                                    <span class="icon" aria-hidden="true">card_today</span>
+                                    View opening #<?= (int) $opening->getId() ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </section>
+            <?php endif; ?>
         </div>
     </main>

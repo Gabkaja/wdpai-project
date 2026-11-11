@@ -15,7 +15,10 @@ final class KickClient
         $this->clientId = getenv('KICK_CLIENT_ID') ?: '';
         $this->clientSecret = getenv('KICK_CLIENT_SECRET') ?: '';
         $this->redirectUri = getenv('KICK_REDIRECT_URI') ?: '';
+    }
 
+    private function requireOAuthConfig(): void
+    {
         if ($this->clientId === '' || $this->clientSecret === '' || $this->redirectUri === '') {
             throw new \RuntimeException('Kick OAuth configuration is incomplete.');
         }
@@ -23,6 +26,7 @@ final class KickClient
 
     public function buildAuthorizationUrl(string $state, string $codeChallenge): string
     {
+        $this->requireOAuthConfig();
         $params = [
             'response_type' => 'code',
             'client_id' => $this->clientId,
@@ -38,6 +42,7 @@ final class KickClient
 
     public function exchangeCode(string $code, string $codeVerifier): string
     {
+        $this->requireOAuthConfig();
         $body = http_build_query([
             'grant_type' => 'authorization_code',
             'code' => $code,
@@ -82,6 +87,7 @@ final class KickClient
 
     public function fetchCurrentUser(string $accessToken): array
     {
+        $this->requireOAuthConfig();
         $ch = curl_init('https://api.kick.com/public/v1/users');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
@@ -123,5 +129,34 @@ final class KickClient
             'id' => (int) $user['user_id'],
             'username' => (string) $user['name'],
         ];
+    }
+
+    public function isChannelLive(string $slug): bool
+    {
+        $ch = curl_init('https://kick.com/api/v2/channels/' . rawurlencode($slug));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_FAILONERROR, false);
+
+        $response = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false || $httpCode < 200 || $httpCode >= 300) {
+            error_log('Kick channel fetch failed for ' . $slug . ': ' . $curlError . ' HTTP ' . $httpCode);
+
+            return false;
+        }
+
+        $data = json_decode($response, true);
+
+        if (!is_array($data) || !isset($data['livestream'])) {
+            error_log('Kick channel fetch returned invalid response for ' . $slug);
+
+            return false;
+        }
+
+        return $data['livestream'] !== null;
     }
 }

@@ -79,7 +79,7 @@
 
                             <p class="podium__packs">
                                 <span>Packs opened</span>
-                                <strong>--</strong>
+                                <strong><?= (int) $player->getPacksOpened() ?></strong>
                             </p>
                         </article>
                     </li>
@@ -146,7 +146,7 @@
                                 </td>
                                 <td>
                                     <span class="ranking__packs">
-                                        <span class="ranking__value">--</span>
+                                        <span class="ranking__value"><?= (int) $player->getPacksOpened() ?></span>
                                         <?php if ($player->getRankPosition() === 1): ?>
                                             <span class="ranking__tag">Top</span>
                                         <?php endif; ?>

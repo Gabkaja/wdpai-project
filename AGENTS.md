@@ -111,6 +111,15 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 - Tożsamość z Kicka jest wiązana z kontem wyłącznie przez `kick_user_id` (tabela `kick_accounts`), nigdy przez nazwę ani e-mail.
 - Wejście przez Kick nie omija ról ani sesji: po udanym callbacku wołaj `Session::login()` tak jak przy logowaniu hasłem.
 
+## Paczki kart i transakcje
+
+- Parametry paczek są w bazie, nie w kodzie: `pack_settings` (jeden wiersz: `cards_per_pack`, `cost_points`) i `rarities.drop_weight`. Nie wpisuj tych wartości na sztywno w PHP.
+- Losowanie wyłącznie przez `random_int()` (nigdy `rand`/`mt_rand`). Najpierw rzadkość wg wag (z pominięciem rzadkości bez kart), potem losowa karta tej rzadkości. Karty mogą się powtarzać.
+- Otwarcie paczki to jedna transakcja w `PackRepository::open()`: `SELECT points FROM users WHERE id = :id FOR UPDATE`, sprawdzenie salda, odjęcie punktów, wpis w `pack_openings` i `pack_opening_cards`, `INSERT ... ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1`, wpis `info` w `system_logs`. Wszystko na tym samym obiekcie PDO (także `LogRepository`), żeby wpis logu był w tej transakcji. Każdy wyjątek: `rollBack()` i ponowny `throw`.
+- Za mało punktów sygnalizuj przez `\DomainException` z komunikatem `insufficient_points`; kontroler zamienia go na komunikat dla użytkownika. Nie twórz własnych klas wyjątków.
+- Punkty zmienia się wyłącznie w repozytoriach, nigdy na podstawie wartości z żądania. Kwoty z formularzy (np. nadanie punktów przez admina) waliduj jako liczby całkowite w ustalonym zakresie.
+- Wyniki otwarcia paczki prezentuje GET `/packs/{id}` i tylko właścicielowi; cudzy lub nieistniejący wpis = 404.
+
 ## Konwencje kodu
 
 - **Nie dodawaj frameworków ani zależności bez zgody.**
