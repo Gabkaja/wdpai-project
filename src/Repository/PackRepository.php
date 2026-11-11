@@ -233,13 +233,17 @@ final class PackRepository
             SELECT po.id AS opening_id, po.user_id, po.points_spent, po.opened_at,
                    c.id AS card_id, c.name AS card_name, c.code AS card_code, c.drop_chance AS card_drop_chance, c.icon AS card_icon, c.description AS card_description, c.created_at AS card_created_at,
                    r.code AS rarity_code, r.name AS rarity_name
-            FROM pack_openings po
+            FROM (
+                SELECT id FROM pack_openings
+                WHERE user_id = :user_id
+                ORDER BY opened_at DESC, id DESC
+                LIMIT :limit
+            ) recent
+            JOIN pack_openings po ON po.id = recent.id
             LEFT JOIN pack_opening_cards poc ON poc.opening_id = po.id
             LEFT JOIN cards c ON c.id = poc.card_id
             LEFT JOIN rarities r ON r.id = c.rarity_id
-            WHERE po.user_id = :user_id
             ORDER BY po.opened_at DESC, po.id DESC, poc.slot
-            LIMIT :limit
         ');
         $statement->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
