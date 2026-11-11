@@ -1,16 +1,5 @@
     <main class="auth">
         <section class="auth__panel" aria-labelledby="auth-title">
-            <div class="auth__status">
-                <span class="auth__status-item auth__status-item--live">
-                    <span class="pulse" aria-hidden="true"></span>
-                    <span>Live system 0.9.4 // Kick sync active</span>
-                </span>
-                <span class="auth__status-item">
-                    <span class="icon" aria-hidden="true">lock</span>
-                    <span>SSL 256-bit secure</span>
-                </span>
-            </div>
-
             <div class="auth__body">
                 <span class="auth__logo">
                     <span class="icon" aria-hidden="true">playing_cards</span>
@@ -34,12 +23,6 @@
 
                 <form class="auth-form" method="post" action="/register">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-
-                    <a class="auth-form__oauth" href="/auth/kick">
-                        <span class="auth-form__kick-mark" aria-hidden="true">K</span>
-                        <span>Continue with Kick.com</span>
-                        <span class="icon" aria-hidden="true">arrow_forward</span>
-                    </a>
 
                     <p class="auth-form__divider"><span>Or via email</span></p>
 
@@ -114,21 +97,10 @@
                     </button>
 
                     <p class="auth__switch">Already have an account? <a href="/login">Log in</a>.</p>
-
-                    <div class="auth-sync">
-                        <span class="icon" aria-hidden="true">sync</span>
-                        <span>Kick sync active &middot; Live drop ready</span>
-                        <span class="badge badge--live">Live drop ready</span>
-                    </div>
                 </form>
 
             </div>
 
-            <ul class="auth__meta" role="list">
-                <li>TCG verified</li>
-                <li>Anti-fraud bot guard</li>
-                <li>Kick partner</li>
-            </ul>
         </section>
 
         <aside class="auth-drop" aria-label="Latest top drop">

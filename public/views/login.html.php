@@ -23,6 +23,12 @@
 
                 <form class="auth-form" method="post" action="/login">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                    <a class="auth-form__oauth" href="/auth/kick/login">
+                        <span class="auth-form__kick-mark" aria-hidden="true">K</span>
+                        <span>Continue with Kick.com</span>
+                        <span class="icon" aria-hidden="true">arrow_forward</span>
+                    </a>
+
                     <p class="auth-form__divider"><span>Or via email</span></p>
 
                     <div class="auth-form__field">
