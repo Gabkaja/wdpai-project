@@ -9,7 +9,7 @@
 
         <section class="pack-header" aria-labelledby="pack-title">
             <div class="pack-header__inner container">
-                <a href="/profile" class="pack-header__back">
+                <a href="/profile" class="button button--primary pack-header__back">
                     <span class="icon" aria-hidden="true">arrow_back</span>
                     Back to profile
                 </a>
