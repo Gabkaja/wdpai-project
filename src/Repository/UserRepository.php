@@ -117,6 +117,25 @@ final class UserRepository
         ]);
     }
 
+    public function addPoints(int $userId, int $amount): void
+    {
+        $statement = $this->pdo->prepare('UPDATE users SET points = points + :amount WHERE id = :id');
+
+        try {
+            $statement->execute([':amount' => $amount, ':id' => $userId]);
+        } catch (\PDOException $exception) {
+            if ($exception->getCode() === '23514') {
+                throw new \DomainException('points_out_of_range');
+            }
+
+            throw $exception;
+        }
+
+        if ($statement->rowCount() === 0) {
+            throw new \DomainException('user_not_found');
+        }
+    }
+
     private function mapRowToUserWithoutPassword(array $row): User
     {
         return new User(

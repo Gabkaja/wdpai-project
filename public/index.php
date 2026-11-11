@@ -39,6 +39,7 @@ $routing->get('/profile/kick/connect', KickController::class, 'connect');
 $routing->get('/auth/kick/callback', KickController::class, 'callback');
 $routing->post('/profile/kick/unlink', KickController::class, 'unlink');
 $routing->post('/logout', SecurityController::class, 'logout');
+$routing->post('/admin/users/{id}/points', AdminController::class, 'grantPoints');
 $routing->post('/packs/open', PackController::class, 'open');
 $routing->get('/packs/{id}', PackController::class, 'show');
 
