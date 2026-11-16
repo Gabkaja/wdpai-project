@@ -1594,7 +1594,8 @@ main {
   right: var(--space-md-2);
   color: var(--color-text-muted);
   font-size: var(--size-icon-lg);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .auth-form__row {

@@ -57,6 +57,28 @@
     button.addEventListener('click', toggleTheme);
   });
 
+  document.body.addEventListener('click', function (event) {
+    var icon = event.target.closest('.auth-form__input-trailing');
+
+    if (!icon) {
+      return;
+    }
+
+    var input = icon.parentElement.querySelector('input[type="password"], input[type="text"]');
+
+    if (!input) {
+      return;
+    }
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.textContent = 'visibility_off';
+    } else {
+      input.type = 'password';
+      icon.textContent = 'visibility';
+    }
+  });
+
   function handleSystemChange(event) {
     if (!readStoredTheme()) {
       applyTheme(event.matches ? 'light' : 'dark');
