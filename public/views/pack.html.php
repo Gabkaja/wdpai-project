@@ -16,10 +16,6 @@
                 <h1 class="pack-header__title" id="pack-title">Pack opened</h1>
                 <div class="pack-header__meta">
                     <span class="pack-header__meta-item">
-                        <span class="icon" aria-hidden="true">attach_money</span>
-                        <?= (int) $pointsSpent ?> points spent
-                    </span>
-                    <span class="pack-header__meta-item">
                         <span class="icon" aria-hidden="true">schedule</span>
                         <?= htmlspecialchars($openedAt) ?>
                     </span>

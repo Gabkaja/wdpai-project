@@ -281,7 +281,6 @@
                         <?php foreach ($recentOpenings as $opening): ?>
                             <li class="recent-list__item">
                                 <span class="recent-list__date"><?= htmlspecialchars($opening->getOpenedAt()->format('Y-m-d H:i')) ?></span>
-                                <span class="recent-list__cost"><?= (int) $opening->getPointsSpent() ?> pts</span>
                                 <a class="recent-list__link" href="/packs/<?= (int) $opening->getId() ?>">
                                     <span class="icon" aria-hidden="true">playing_cards</span>
                                     View opening #<?= (int) $opening->getId() ?>

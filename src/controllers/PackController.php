@@ -20,13 +20,16 @@ final class PackController extends AppController
         $packRepository = new PackRepository($pdo, new LogRepository($pdo));
 
         try {
-            $openingId = $packRepository->open($user->getId());
-            $this->redirect('/packs/' . (int) $openingId);
+            $packRepository->buy($user->getId(), 1);
+            $openingIds = $packRepository->openFromStock($user->getId(), 1);
+            $this->redirect('/packs/' . (int) $openingIds[0]);
         } catch (\DomainException $exception) {
             $message = $exception->getMessage();
 
             if ($message === 'insufficient_points') {
                 Session::flash('error', 'Not enough points to open a pack.');
+            } elseif ($message === 'no_unopened_packs') {
+                Session::flash('error', 'You have no unopened packs.');
             } else {
                 Session::flash('error', 'Could not open pack.');
             }
@@ -55,12 +58,16 @@ final class PackController extends AppController
         }
 
         $settings = $packRepository->settings();
+        $cards = [];
+
+        foreach ($opening->getCards() as $openingCard) {
+            $cards[] = $openingCard->getCard();
+        }
 
         $this->render('pack', [
             'pageTitle' => 'Pack opening – StreamRip',
             'opening' => $opening,
-            'cards' => $opening->getCards(),
-            'pointsSpent' => $opening->getPointsSpent(),
+            'cards' => $cards,
             'openedAt' => $opening->getOpenedAt()->format('Y-m-d H:i:s'),
             'cardsPerPack' => $settings['cards_per_pack'],
         ]);
