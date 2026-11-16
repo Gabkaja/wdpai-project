@@ -78,7 +78,7 @@
                 <article class="stat-card stat-card--standing">
                     <div class="stat-card__head">
                         <span>Packs opened</span>
-                        <span class="icon" aria-hidden="true">card_today</span>
+                        <span class="icon" aria-hidden="true">playing_cards</span>
                     </div>
                     <p class="stat-card__value"><?= (int) $packsOpened ?></p>
                     <p class="stat-card__note">Total pack openings</p>
@@ -91,7 +91,7 @@
                 <section class="profile-panel" aria-labelledby="open-pack-heading">
                     <div class="profile-panel__head">
                         <h2 class="profile-panel__title" id="open-pack-heading">
-                            <span class="icon" aria-hidden="true">card_today</span>
+                            <span class="icon" aria-hidden="true">playing_cards</span>
                             Open pack
                         </h2>
                     </div>
@@ -283,7 +283,7 @@
                                 <span class="recent-list__date"><?= htmlspecialchars($opening->getOpenedAt()->format('Y-m-d H:i')) ?></span>
                                 <span class="recent-list__cost"><?= (int) $opening->getPointsSpent() ?> pts</span>
                                 <a class="recent-list__link" href="/packs/<?= (int) $opening->getId() ?>">
-                                    <span class="icon" aria-hidden="true">card_today</span>
+                                    <span class="icon" aria-hidden="true">playing_cards</span>
                                     View opening #<?= (int) $opening->getId() ?>
                                 </a>
                             </li>

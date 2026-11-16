@@ -30,7 +30,7 @@
         <section class="pack-cards" aria-labelledby="cards-heading">
             <div class="container">
                 <h2 class="pack-cards__title" id="cards-heading">
-                    <span class="icon" aria-hidden="true">card_today</span>
+                    <span class="icon" aria-hidden="true">playing_cards</span>
                     Cards (<?= count($cards) ?>)
                 </h2>
                 <?php $this->partial('card-list', ['cards' => $cards]); ?>
