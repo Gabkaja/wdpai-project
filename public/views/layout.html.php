@@ -25,6 +25,9 @@
     <?php foreach ($stylesheets ?? [] as $stylesheet): ?>
         <link rel="stylesheet" href="<?= htmlspecialchars($stylesheet, ENT_QUOTES, 'UTF-8') ?>">
     <?php endforeach; ?>
+    <?php if (isset($currentUser) && $currentUser !== null): ?>
+        <meta name="csrf-token" content="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php endif; ?>
     <script src="/js/theme.js" defer></script>
 </head>
 <body>

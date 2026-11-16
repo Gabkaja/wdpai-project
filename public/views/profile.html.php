@@ -34,9 +34,6 @@
         $uniqueCards = $stats['uniqueCards'] ?? 0;
         $packsOpened = $stats['packsOpened'] ?? 0;
         $completion = $stats['completion'] ?? 0;
-        $cardsPerPack = $packSettings['cards_per_pack'] ?? 4;
-        $costPoints = $packSettings['cost_points'] ?? 100;
-        $canAfford = (int) $points >= $costPoints;
         ?>
 
         <section class="profile-stats" aria-labelledby="stats-heading">
@@ -88,37 +85,28 @@
 
         <div class="profile-layout">
             <div class="profile-sidebar">
-                <section class="profile-panel" aria-labelledby="open-pack-heading">
+                <section class="profile-panel" aria-labelledby="packs-heading">
                     <div class="profile-panel__head">
-                        <h2 class="profile-panel__title" id="open-pack-heading">
+                        <h2 class="profile-panel__title" id="packs-heading">
                             <span class="icon" aria-hidden="true">playing_cards</span>
-                            Open pack
+                            Packs
                         </h2>
                     </div>
 
-                    <div class="profile-panel__text">
-                        <span class="pack-cost">
-                            <span class="icon" aria-hidden="true">attach_money</span>
-                            Cost: <strong><?= (int) $costPoints ?></span> points
-                        </span>
-                        <span class="pack-balance">
-                            <span class="icon" aria-hidden="true">account_balance_wallet</span>
-                            Your balance: <strong><?= (int) $points ?></span> points
-                        </span>
-                    </div>
+                    <ul class="profile-packs" role="list">
+                        <li class="profile-packs__item">
+                            <span class="profile-packs__label">Points</span>
+                            <span class="profile-packs__value"><?= (int) $points ?></span>
+                        </li>
+                        <li class="profile-packs__item">
+                            <span class="profile-packs__label">Unopened packs</span>
+                            <span class="profile-packs__value"><?= (int) $unopenedPacks ?></span>
+                        </li>
+                    </ul>
 
-                    <form class="profile-panel__form" method="post" action="/packs/open">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                        <button class="button button--primary" type="submit"<?= !$canAfford ? ' disabled aria-disabled="true"' : '' ?>>
-                            <span class="icon" aria-hidden="true">bolt</span>
-                            Open pack (<?= (int) $cardsPerPack ?> cards)
-                        </button>
-                        <?php if (!$canAfford): ?>
-                            <p class="profile-panel__text profile-panel__status" role="status" aria-live="polite">
-                                Not enough points to open a pack.
-                            </p>
-                        <?php endif; ?>
-                    </form>
+                    <p class="profile-packs__hint">
+                        <a class="button button--primary" href="/packs">Open packs</a>
+                    </p>
                 </section>
 
                 <section class="profile-panel" aria-labelledby="avatar-heading">
@@ -176,18 +164,7 @@
                                 <span class="icon" aria-hidden="true">verified</span>
                                 Kick account
                             </h2>
-                        </div>
-                        <div class="profile-panel__text">
-                            Connected with Kick as <strong><?= htmlspecialchars($kickAccount['kick_username']) ?></strong>.
-                        </div>
-                        <form class="profile-panel__form" method="post" action="/profile/kick/unlink">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                            <button class="button button--primary" type="submit">
-                                <span class="icon" aria-hidden="true">unlink</span>
-                                Disconnect
-                            </button>
-                        </form>
-                    </section>
+                        </div></section>
                 <?php else: ?>
                     <section class="profile-panel" aria-labelledby="kick-heading">
                         <div class="profile-panel__head">
@@ -268,27 +245,5 @@
                 </div>
             </section>
 
-            <?php if ($recentOpenings): ?>
-                <section class="profile-panel profile-recent" aria-labelledby="recent-heading">
-                    <div class="profile-panel__head">
-                        <h2 class="profile-panel__title" id="recent-heading">
-                            <span class="icon" aria-hidden="true">history</span>
-                            Recent pack openings
-                        </h2>
-                    </div>
-
-                    <ul class="recent-list" role="list">
-                        <?php foreach ($recentOpenings as $opening): ?>
-                            <li class="recent-list__item">
-                                <span class="recent-list__date"><?= htmlspecialchars($opening->getOpenedAt()->format('Y-m-d H:i')) ?></span>
-                                <a class="recent-list__link" href="/packs/<?= (int) $opening->getId() ?>">
-                                    <span class="icon" aria-hidden="true">playing_cards</span>
-                                    View opening #<?= (int) $opening->getId() ?>
-                                </a>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </section>
-            <?php endif; ?>
         </div>
     </main>

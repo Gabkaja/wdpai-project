@@ -5,37 +5,46 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Database;
-use App\Repository\PackRepository;
 use App\Repository\LogRepository;
-use App\Session;
+use App\Repository\PackRepository;
+use App\Repository\RarityRepository;
+use App\Repository\UserSettingsRepository;
 
 final class PackController extends AppController
 {
-    public function open(): void
+    public function index(): void
     {
         $user = $this->requireLogin();
-        $this->verifyCsrfOrAbort();
+        $this->noCache();
 
         $pdo = (new Database())->connect();
         $packRepository = new PackRepository($pdo, new LogRepository($pdo));
+        $rarityRepository = new RarityRepository($pdo);
+        $userSettingsRepository = new UserSettingsRepository($pdo);
 
-        try {
-            $packRepository->buy($user->getId(), 1);
-            $openingIds = $packRepository->openFromStock($user->getId(), 1);
-            $this->redirect('/packs/' . (int) $openingIds[0]);
-        } catch (\DomainException $exception) {
-            $message = $exception->getMessage();
+        $packSettings = $packRepository->settings();
+        $userSettings = $userSettingsRepository->find($user->getId());
+        $rarities = $rarityRepository->odds();
+        $history = $packRepository->historyByUser($user->getId(), 0, 10);
 
-            if ($message === 'insufficient_points') {
-                Session::flash('error', 'Not enough points to open a pack.');
-            } elseif ($message === 'no_unopened_packs') {
-                Session::flash('error', 'You have no unopened packs.');
-            } else {
-                Session::flash('error', 'Could not open pack.');
-            }
+        $rarityLevels = [];
 
-            $this->redirect('/profile');
+        foreach ($rarities as $rarity) {
+            $rarityLevels[$rarity->getCode()] = $rarity->getLevel();
         }
+
+        $this->render('packs', [
+            'pageTitle' => 'Packs – StreamRip',
+            'points' => $user->getPoints(),
+            'unopenedPacks' => $user->getUnopenedPacks(),
+            'packSettings' => $packSettings,
+            'userSettings' => $userSettings,
+            'rarities' => $rarities,
+            'rarityLevels' => $rarityLevels,
+            'history' => $history['items'],
+            'historyHasMore' => $history['hasMore'],
+            'historyNextOffset' => count($history['items']),
+        ]);
     }
 
     public function show(int $id): void
