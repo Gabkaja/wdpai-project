@@ -31,7 +31,7 @@ final class ProfileController extends AppController
             $totalCards += $item->getQuantity();
         }
 
-        $packsOpened = count($recentOpenings);
+        $packsOpened = $packRepository->countByUser($user->getId());
 
         $this->render('profile', [
             'pageTitle' => 'My profile – StreamRip',

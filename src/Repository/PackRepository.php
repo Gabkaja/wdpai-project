@@ -227,6 +227,15 @@ final class PackRepository
         ];
     }
 
+    public function countByUser(int $userId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM pack_openings WHERE user_id = :user_id');
+        $statement->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $statement->execute();
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function recentByUser(int $userId, int $limit): array
     {
         $statement = $this->pdo->prepare('
