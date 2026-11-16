@@ -286,3 +286,4 @@
         </div>
     </section>
 </main>
+<script type="module" src="/js/packs/index.js"></script>

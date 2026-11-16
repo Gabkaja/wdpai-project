@@ -4710,3 +4710,6 @@ main {
     animation: none;
   }
 }
+.packs__input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
