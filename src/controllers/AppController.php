@@ -83,6 +83,70 @@ abstract class AppController
         }
     }
 
+    protected function json(int $status, array $payload): never
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo json_encode($payload, JSON_THROW_ON_ERROR);
+        exit;
+    }
+
+    protected function jsonError(int $status, string $code, string $message, array $fields = []): never
+    {
+        $error = [
+            'code' => $code,
+            'message' => $message,
+        ];
+
+        if ($fields !== []) {
+            $error['fields'] = $fields;
+        }
+
+        $this->json($status, ['ok' => false, 'error' => $error]);
+    }
+
+    protected function jsonBody(): array
+    {
+        $raw = file_get_contents('php://input');
+
+        if ($raw === false) {
+            $raw = '';
+        }
+
+        try {
+            $decoded = json_decode($raw, false, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            $this->jsonError(400, 'invalid_json', 'Request body must be valid JSON.');
+        }
+
+        if (!is_object($decoded)) {
+            $this->jsonError(400, 'invalid_json', 'Request body must be a JSON object.');
+        }
+
+        return (array) $decoded;
+    }
+
+    protected function requireLoginJson(): User
+    {
+        $user = $this->currentUser();
+
+        if ($user === null) {
+            $this->jsonError(401, 'unauthenticated', 'Authentication required.');
+        }
+
+        return $user;
+    }
+
+    protected function verifyCsrfJson(): void
+    {
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+
+        if (!Session::verifyCsrf(is_string($token) ? $token : null)) {
+            $this->jsonError(403, 'csrf_failed', 'Invalid or missing CSRF token.');
+        }
+    }
+
     protected function render(string $template, array $variables = [], ?string $layout = 'layout'): void
     {
         if ($layout !== null && !isset($variables['currentUser'])) {
