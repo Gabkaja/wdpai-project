@@ -536,6 +536,105 @@ main {
   font-size: var(--size-icon-md);
 }
 
+/* 4a. User menu
+   -------------------------------------------------------------------------- */
+.user-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.user-menu__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-lg);
+  color: var(--color-text);
+  background: var(--color-surface-low);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.user-menu__toggle:hover,
+.user-menu__toggle:focus-visible {
+  background: var(--color-surface-high);
+  box-shadow: var(--shadow-inset-15);
+}
+
+.user-menu__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-control-sm);
+  height: var(--size-control-sm);
+  border-radius: var(--radius-round);
+  color: var(--color-on-primary);
+  background: var(--color-text-strong);
+  box-shadow: var(--shadow-accent-30);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.user-menu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-xs));
+  min-width: 14rem;
+  margin: 0;
+  padding: var(--space-xs);
+  list-style: none;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-lowest);
+  box-shadow: var(--shadow-banner);
+  z-index: 100;
+}
+
+.user-menu__item {
+  margin: 0;
+}
+
+.user-menu__link {
+  display: block;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: var(--line-normal);
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+  width: 100%;
+  border: 0;
+}
+
+.user-menu__link:hover,
+.user-menu__link:focus-visible {
+  background: var(--color-surface-high);
+  color: var(--color-brand);
+}
+
+.user-menu:focus-within .user-menu__panel {
+  display: block;
+}
+
 /* 5. Buttons
    -------------------------------------------------------------------------- */
 .button {

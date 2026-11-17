@@ -47,29 +47,7 @@ $isCurrent = static function (string $href) use ($currentPath): bool {
                     <span class="icon" aria-hidden="true">light_mode</span>
                 </button>
 
-                <?php if (isset($currentUser) && $currentUser !== null): ?>
-                    <span class="header-tools__user" aria-hidden="true"><?= htmlspecialchars($currentUser->getUsername()) ?></span>
-                    <a class="button button--primary header-tools__profile" href="/profile">
-                        <span class="icon" aria-hidden="true">person</span>
-                        Profile
-                    </a>
-                    <form class="header-tools__logout" method="post" action="/logout" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                        <button class="button button--primary header-tools__logout-button" type="submit">
-                            <span class="icon" aria-hidden="true">logout</span>
-                            Logout
-                        </button>
-                    </form>
-                <?php else: ?>
-                    <a class="button button--primary header-tools__login" href="/login">
-                        <span class="icon" aria-hidden="true">login</span>
-                        Log in
-                    </a>
-                    <a class="button button--primary header-tools__register" href="/register">
-                        <span class="icon" aria-hidden="true">person_add</span>
-                        Register
-                    </a>
-                <?php endif; ?>
+                <?php $this->partial('user-menu', ['currentUser' => $currentUser ?? null]); ?>
             </div>
         </div>
     </header>
