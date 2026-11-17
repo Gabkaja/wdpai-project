@@ -27,7 +27,13 @@ $isCurrent = static function (string $href) use ($currentPath): bool {
         <div class="site-header__inner container">
             <a class="brand" href="/">StreamRip</a>
 
-            <nav class="main-nav" aria-label="Main navigation">
+            <button class="nav-toggle" type="button" data-nav-toggle aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-nav">
+                <span class="nav-toggle__bar" aria-hidden="true"></span>
+                <span class="nav-toggle__bar" aria-hidden="true"></span>
+                <span class="nav-toggle__bar" aria-hidden="true"></span>
+            </button>
+
+            <nav class="main-nav" id="main-nav" data-nav aria-label="Main navigation">
                 <ul class="main-nav__list">
                     <?php foreach ($navItems as $item): ?>
                         <li>

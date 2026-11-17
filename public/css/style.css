@@ -631,8 +631,70 @@ main {
   color: var(--color-brand);
 }
 
-.user-menu:focus-within .user-menu__panel {
+/* 4b. Nav toggle
+   -------------------------------------------------------------------------- */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-low);
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.nav-toggle:hover,
+.nav-toggle:focus-visible {
+  background: var(--color-surface-high);
+}
+
+.nav-toggle__bar {
   display: block;
+  width: 1.5rem;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: var(--space-3xs);
+  transition: background-color var(--transition);
+}
+
+.nav-toggle--open .nav-toggle__bar {
+  background: var(--color-brand);
+}
+
+/* 4c. Mobile navigation
+   -------------------------------------------------------------------------- */
+@media (max-width: 44.9375rem) {
+  .nav-toggle {
+    display: flex;
+  }
+
+  .js .main-nav--hidden {
+    display: none;
+  }
+
+  .js .main-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: var(--space-md);
+    background: var(--color-header);
+    box-shadow: var(--shadow-header);
+    z-index: 60;
+  }
+
+  .js .main-nav__list {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+}
+
+@media (min-width: 45rem) {
+  .nav-toggle {
+    display: none;
+  }
 }
 
 /* 5. Buttons
