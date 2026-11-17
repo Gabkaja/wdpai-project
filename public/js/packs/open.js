@@ -11,6 +11,29 @@ const openAllBtn = document.querySelector('button[data-action="open-all"]');
 const messageEl = openForm ? openForm.querySelector('[data-message="open"]') : null;
 
 if (openForm && messageEl) {
+    function setOpenControls(disable) {
+        const submit = openForm.querySelector('button[type="submit"]');
+        if (submit) {
+            submit.disabled = disable;
+            submit.setAttribute('aria-busy', String(disable));
+        }
+        if (openAllBtn) {
+            openAllBtn.disabled = disable;
+        }
+    }
+
+    document.addEventListener('packs:sceneopen', () => {
+        setOpenControls(true);
+    });
+
+    document.addEventListener('packs:sceneclose', () => {
+        setOpenControls(false);
+    });
+
+    document.addEventListener('packs:openanother', (event) => {
+        open(event.detail.count || 1);
+    });
+
     async function open(count) {
         setBusy(openForm, true);
         showMessage(messageEl, 'status', '');
