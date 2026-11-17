@@ -9,7 +9,6 @@ const TIME = {
 const stage = document.querySelector('[data-stage]');
 const reveal = document.querySelector('.packs__reveal');
 const closeBtn = document.querySelector('.packs__stage-close');
-const live = document.querySelector('[data-live]');
 const root = document.querySelector('[data-packs-root]');
 const stageInner = stage ? stage.querySelector('.packs__stage-inner') : null;
 
@@ -168,6 +167,17 @@ function revealCardUI(btn) {
     btn.dataset.revealed = 'true';
     btn.classList.add('pack-card--revealed');
     btn.disabled = true;
+
+    const openingIndex = parseInt(btn.dataset.opening, 10);
+    const cardIndex = parseInt(btn.dataset.card, 10);
+    const entry = openings[openingIndex] ? openings[openingIndex].cards[cardIndex] : null;
+
+    if (entry) {
+        btn.setAttribute(
+            'aria-label',
+            `${entry.card.name}, ${entry.card.rarity_name}` + (entry.is_new ? ', new' : '')
+        );
+    }
 }
 
 function announceCard(btn) {
@@ -178,9 +188,6 @@ function announceCard(btn) {
     const total = openings[openingIndex].cards.length;
     const text = `Card ${cardIndex + 1} of ${total}: ${card.name}, ${card.rarity_name}` + (entry.is_new ? ', new' : '');
     announce(text);
-    if (live) {
-        live.textContent = text;
-    }
 }
 
 function flipCard(btn, silent) {
@@ -222,27 +229,28 @@ function flashStage() {
 function flipAllRemaining(cardBtns, fromIdx) {
     let bestLevel = 0;
     let hasNew = false;
+    let revealed = 0;
+    let newCards = 0;
     for (let i = fromIdx; i < cardBtns.length; i++) {
         const btn = cardBtns[i];
         if (btn.dataset.revealed === 'true') {
             continue;
         }
         revealCardUI(btn);
+        revealed++;
         const openingIndex = parseInt(btn.dataset.opening, 10);
         const cardIndex = parseInt(btn.dataset.card, 10);
         const entry = openings[openingIndex].cards[cardIndex];
         if (entry.is_new) {
             hasNew = true;
+            newCards++;
         }
         const level = cardLevel(entry.card);
         if (level > bestLevel) {
             bestLevel = level;
         }
     }
-    announce(`${totalCards()} cards revealed, ${countNew()} new.`);
-    if (live) {
-        live.textContent = `${totalCards()} cards revealed, ${countNew()} new.`;
-    }
+    announce(`${revealed} cards revealed, ${newCards} new.`);
     play('flip');
     if (bestLevel >= 3) {
         play('reveal', { level: bestLevel });
@@ -536,7 +544,7 @@ function wireQueuePack(state, wrapper) {
     }
 
     if (auto) {
-        const t = setTimeout(() => doTear(), TIME.tear);
+        const t = setTimeout(() => doTear(), reducedMotion ? 0 : TIME.tear);
         trackTimer(t);
     } else {
         trackListener(state.seal, 'click', doTear);

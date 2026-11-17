@@ -27,12 +27,6 @@ final class PackController extends AppController
         $rarities = $rarityRepository->odds();
         $history = $packRepository->historyByUser($user->getId(), 0, 10);
 
-        $rarityLevels = [];
-
-        foreach ($rarities as $rarity) {
-            $rarityLevels[$rarity->getCode()] = $rarity->getLevel();
-        }
-
         $this->render('packs', [
             'pageTitle' => 'Packs – StreamRip',
             'points' => $user->getPoints(),
@@ -40,7 +34,7 @@ final class PackController extends AppController
             'packSettings' => $packSettings,
             'userSettings' => $userSettings,
             'rarities' => $rarities,
-            'rarityLevels' => $rarityLevels,
+            'rarityLevels' => $this->rarityLevels($rarities),
             'history' => $history['items'],
             'historyHasMore' => $history['hasMore'],
             'historyNextOffset' => count($history['items']),
@@ -66,19 +60,24 @@ final class PackController extends AppController
             return;
         }
 
-        $settings = $packRepository->settings();
-        $cards = [];
-
-        foreach ($opening->getCards() as $openingCard) {
-            $cards[] = $openingCard->getCard();
-        }
+        $rarities = (new RarityRepository($pdo))->odds();
 
         $this->render('pack', [
             'pageTitle' => 'Pack opening – StreamRip',
             'opening' => $opening,
-            'cards' => $cards,
-            'openedAt' => $opening->getOpenedAt()->format('Y-m-d H:i:s'),
-            'cardsPerPack' => $settings['cards_per_pack'],
+            'openingCards' => $opening->getCards(),
+            'rarityLevels' => $this->rarityLevels($rarities),
         ]);
+    }
+
+    private function rarityLevels(array $rarities): array
+    {
+        $levels = [];
+
+        foreach ($rarities as $rarity) {
+            $levels[$rarity->getCode()] = $rarity->getLevel();
+        }
+
+        return $levels;
     }
 }

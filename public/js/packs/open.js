@@ -27,7 +27,7 @@ if (openForm && messageEl) {
     });
 
     document.addEventListener('packs:sceneclose', () => {
-        setOpenControls(false);
+        setOpenControls(config.stock <= 0);
     });
 
     document.addEventListener('packs:openanother', (event) => {
@@ -36,6 +36,9 @@ if (openForm && messageEl) {
 
     async function open(count) {
         setBusy(openForm, true);
+        if (openAllBtn) {
+            openAllBtn.disabled = true;
+        }
         showMessage(messageEl, 'status', '');
 
         try {
@@ -47,6 +50,9 @@ if (openForm && messageEl) {
         } catch (error) {
             showMessage(messageEl, 'error', messageFor(error));
             announce(messageFor(error));
+            if (openAllBtn) {
+                openAllBtn.disabled = config.stock <= 0;
+            }
         } finally {
             setBusy(openForm, false);
         }

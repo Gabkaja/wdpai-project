@@ -134,7 +134,7 @@
 
             <form class="packs__form" data-form="settings" method="post" action="/api/settings/packs">
                 <div class="packs__field packs__field--radios">
-                    <label class="packs__label">Reveal mode</label>
+                    <span class="packs__label">Reveal mode</span>
                     <p class="packs__field-description">How cards are revealed after opening.</p>
                     <div class="packs__radios" role="radiogroup" aria-label="Reveal mode">
                         <label class="packs__radio">
@@ -151,7 +151,7 @@
                 </div>
 
                 <div class="packs__field packs__field--radios">
-                    <label class="packs__label">Multi-open mode</label>
+                    <span class="packs__label">Multi-open mode</span>
                     <p class="packs__field-description">What happens when you open several packs.</p>
                     <div class="packs__radios" role="radiogroup" aria-label="Multi-open mode">
                         <label class="packs__radio">
@@ -178,7 +178,7 @@
                     <p class="packs__field-description">Reveal sound volume.</p>
                     <div class="packs__range">
                         <input class="packs__range-input" id="packs-settings-volume" name="sound_volume" type="range" min="0" max="100" value="<?= (int) $userSettings->getSoundVolume() ?>">
-                        <output class="packs__range-output"><?= (int) $userSettings->getSoundVolume() ?></output>
+                        <output class="packs__range-output" for="packs-settings-volume"><?= (int) $userSettings->getSoundVolume() ?></output>
                     </div>
                 </div>
 

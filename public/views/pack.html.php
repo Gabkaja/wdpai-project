@@ -17,7 +17,9 @@
                 <div class="pack-header__meta">
                     <span class="pack-header__meta-item">
                         <span class="icon" aria-hidden="true">schedule</span>
-                        <?= htmlspecialchars($openedAt) ?>
+                        <time datetime="<?= htmlspecialchars($opening->getOpenedAt()->format(DATE_ATOM), ENT_QUOTES, 'UTF-8') ?>">
+                            <?= htmlspecialchars($opening->getOpenedAt()->format('Y-m-d H:i'), ENT_QUOTES, 'UTF-8') ?>
+                        </time>
                     </span>
                 </div>
             </div>
@@ -27,9 +29,32 @@
             <div class="container">
                 <h2 class="pack-cards__title" id="cards-heading">
                     <span class="icon" aria-hidden="true">playing_cards</span>
-                    Cards (<?= count($cards) ?>)
+                    Cards (<?= count($openingCards) ?>)
                 </h2>
-                <?php $this->partial('card-list', ['cards' => $cards]); ?>
+                <ul class="pack-result__cards" role="list">
+                    <?php foreach ($openingCards as $openingCard): ?>
+                        <?php
+                        $card = $openingCard->getCard();
+                        $level = (int) ($rarityLevels[$card->getRarityCode()] ?? 1);
+                        ?>
+                        <li class="pack-result__item">
+                            <article class="pack-card pack-card--static pack-card--revealed pack-card--level-<?= $level ?>">
+                                <div class="pack-card__inner">
+                                    <div class="pack-card__face pack-card__face--back" aria-hidden="true"></div>
+                                    <div class="pack-card__face pack-card__face--front">
+                                        <span class="pack-card__icon icon" aria-hidden="true"><?= htmlspecialchars($card->getIcon(), ENT_QUOTES, 'UTF-8') ?></span>
+                                        <h3 class="pack-card__title"><?= htmlspecialchars($card->getName(), ENT_QUOTES, 'UTF-8') ?></h3>
+                                        <span class="pack-card__rarity"><?= htmlspecialchars($card->getRarityName(), ENT_QUOTES, 'UTF-8') ?></span>
+                                        <p class="pack-card__desc"><?= htmlspecialchars($card->getDescription(), ENT_QUOTES, 'UTF-8') ?></p>
+                                        <?php if ($openingCard->isNew()): ?>
+                                            <span class="pack-card__new">NEW<span class="visually-hidden"> card</span></span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </article>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </section>
     </main>
