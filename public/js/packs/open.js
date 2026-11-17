@@ -1,0 +1,72 @@
+import { api } from '../api.js';
+import { updateStock, config } from './state.js';
+import { prependOpenings } from './history.js';
+import { show as stageShow } from './stage.js';
+import { settings } from './settings.js';
+import { messageFor } from './messages.js';
+import { setBusy, showMessage, announce } from './ui.js';
+
+const openForm = document.querySelector('form[data-form="open"]');
+const openAllBtn = document.querySelector('button[data-action="open-all"]');
+const messageEl = openForm ? openForm.querySelector('[data-message="open"]') : null;
+
+if (openForm && messageEl) {
+    function setOpenControls(disable) {
+        const submit = openForm.querySelector('button[type="submit"]');
+        if (submit) {
+            submit.disabled = disable;
+            submit.setAttribute('aria-busy', String(disable));
+        }
+        if (openAllBtn) {
+            openAllBtn.disabled = disable;
+        }
+    }
+
+    document.addEventListener('packs:sceneopen', () => {
+        setOpenControls(true);
+    });
+
+    document.addEventListener('packs:sceneclose', () => {
+        setOpenControls(config.stock <= 0);
+    });
+
+    document.addEventListener('packs:openanother', (event) => {
+        open(event.detail.count || 1);
+    });
+
+    async function open(count) {
+        setBusy(openForm, true);
+        if (openAllBtn) {
+            openAllBtn.disabled = true;
+        }
+        showMessage(messageEl, 'status', '');
+
+        try {
+            const data = await api.post('/api/packs/open', { count });
+            updateStock(data.unopened_packs);
+            prependOpenings(data.openings);
+            stageShow(data.openings, settings);
+            announce(`Opened ${data.openings.length} pack(s).`);
+        } catch (error) {
+            showMessage(messageEl, 'error', messageFor(error));
+            announce(messageFor(error));
+            if (openAllBtn) {
+                openAllBtn.disabled = config.stock <= 0;
+            }
+        } finally {
+            setBusy(openForm, false);
+        }
+    }
+
+    openForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const count = parseInt(openForm.querySelector('input[name="count"]').value, 10);
+        open(count);
+    });
+
+    if (openAllBtn) {
+        openAllBtn.addEventListener('click', () => {
+            open(Math.max(1, Math.min(config.stock, config.maxBulk)));
+        });
+    }
+}

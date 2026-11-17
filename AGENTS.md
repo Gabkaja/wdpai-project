@@ -36,6 +36,10 @@ docker compose exec php composer dump-autoload
 ```
 public/index.php              # front controller — jedyny punkt wejścia HTTP
 public/css/style.css          # style
+public/js/api.js              # klient Fetch API (CSRF, timeout, koperta JSON)
+public/js/theme.js            # motyw jasny/ciemny i podgląd hasła
+public/js/sound.js            # hak Web Audio (obecnie placeholder: configure/play nic nie robią)
+public/js/packs/              # moduły strony paczek: index, state, buy, open, settings, history, stage, ui, messages
 public/views/*.html.php       # widoki (fragmenty treści wstawiane do layoutu)
 public/views/layout.html.php  # wspólny layout (header, content, footer)
 public/views/partials/*.php   # partiale: header, footer, card-list
@@ -43,8 +47,13 @@ src/Routing.php               # router (rejestracja + dispatch)
 src/controllers/              # kontrolery (namespace App\Controller)
 src/Model/                    # modele danych (namespace App\Model)
 src/Repository/               # źródła danych (namespace App\Repository)
+src/Repository/PackRepository.php           # kupno i otwieranie paczek, historia
+src/Repository/UserSettingsRepository.php   # ustawienia otwierania per użytkownik
+src/Repository/RarityRepository.php         # rzadkości i szanse (LEFT JOIN cards)
 src/Database.php              # fabryka połączenia PDO
 database/                     # numerowane skrypty SQL (schemat, widoki, dane startowe)
+database/07-pack-stock-and-settings.sql # users.unopened_packs, pack_purchases, user_settings, is_new
+database/08-pack-purchase-limit.sql     # pack_settings.max_purchase_packs
 docker/                       # konfiguracja nginx, php, db
 ```
 
@@ -113,12 +122,34 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 
 ## Paczki kart i transakcje
 
-- Parametry paczek są w bazie, nie w kodzie: `pack_settings` (jeden wiersz: `cards_per_pack`, `cost_points`) i `rarities.drop_weight`. Nie wpisuj tych wartości na sztywno w PHP.
-- Losowanie wyłącznie przez `random_int()` (nigdy `rand`/`mt_rand`). Najpierw rzadkość wg wag (z pominięciem rzadkości bez kart), potem losowa karta tej rzadkości. Karty mogą się powtarzać.
-- Otwarcie paczki to jedna transakcja w `PackRepository::open()`: `SELECT points FROM users WHERE id = :id FOR UPDATE`, sprawdzenie salda, odjęcie punktów, wpis w `pack_openings` i `pack_opening_cards`, `INSERT ... ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1`, wpis `info` w `system_logs`. Wszystko na tym samym obiekcie PDO (także `LogRepository`), żeby wpis logu był w tej transakcji. Każdy wyjątek: `rollBack()` i ponowny `throw`.
-- Za mało punktów sygnalizuj przez `\DomainException` z komunikatem `insufficient_points`; kontroler zamienia go na komunikat dla użytkownika. Nie twórz własnych klas wyjątków.
-- Punkty zmienia się wyłącznie w repozytoriach, nigdy na podstawie wartości z żądania. Kwoty z formularzy (np. nadanie punktów przez admina) waliduj jako liczby całkowite w ustalonym zakresie.
-- Wyniki otwarcia paczki prezentuje GET `/packs/{id}` i tylko właścicielowi; cudzy lub nieistniejący wpis = 404.
+- Paczki są kupowane i otwierane osobno. Kupno: `PackRepository::buy()` w jednej transakcji: `SELECT ... FOR UPDATE` na wierszu użytkownika, odjęcie `cost_points * quantity` punktów, zwiększenie `users.unopened_packs`, wpis w `pack_purchases`, wpis `info` w `system_logs`. Otwarcie: `PackRepository::openFromStock()` w jednej transakcji: blokada wiersza użytkownika, zmniejszenie `unopened_packs`, losowanie, wpisy `pack_openings` i `pack_opening_cards`, aktualizacja `user_cards`, wpis `info` w logu. Każdy wyjątek: `rollBack()` i ponowny `throw`.
+- Parametry są w bazie: `pack_settings` (`cards_per_pack`, `cost_points`, `max_bulk_packs`) i `rarities.drop_weight`. Nie wpisuj ich na sztywno w PHP.
+- Losowanie wyłącznie przez `random_int()`: najpierw rzadkość wg wag (pomijaj rzadkości bez kart), potem losowa karta tej rzadkości. Karty mogą się powtarzać. `pack_opening_cards.is_new` oznacza pierwszą kopię karty w kolekcji użytkownika (wynik `RETURNING quantity` z upsertu równy 1).
+- Ustawienia otwierania są per użytkownik w `user_settings`; brak wiersza oznacza wartości domyślne (takie same w kodzie i w bazie); zapis przez UPSERT.
+- Wyjątki biznesowe to `\DomainException` z kodem w komunikacie: `insufficient_points`, `no_unopened_packs`, `invalid_quantity`, `user_not_found`, `pack_not_configured`. Nie twórz własnych klas wyjątków.
+- Punkty i magazyn paczek zmienia się wyłącznie w repozytoriach, nigdy na podstawie wartości z żądania.
+- Wynik otwarcia (`GET /packs/{id}`) widzi tylko właściciel; cudzy lub nieistniejący wpis = 404.
+
+## JSON API
+
+- Trasy `/api/...` rejestruje się w `public/index.php`; kontrolery `*ApiController` dziedziczą po `AppController` i odpowiadają wyłącznie JSON przez `AppController::json()`. Bez przekierowań i HTML. Każda odpowiedź ma `Cache-Control: no-store`.
+- Niezalogowany: 401 `unauthenticated` (JSON, nie przekierowanie). Brak roli: 403 `forbidden`.
+- CSRF: każdy POST pod `/api/` wymaga nagłówka `X-CSRF-Token` (porównanie `hash_equals` z tokenem sesji); błąd = 403 `csrf_failed`.
+- Koperta: sukces `{"ok":true,"data":{...}}`, błąd `{"ok":false,"error":{"code":"snake_case","message":"English text","fields":{...}}}` (`fields` tylko przy 422).
+- Statusy: 400 `invalid_json`, 401, 403, 404 `not_found`, 409 konflikty biznesowe (`insufficient_points`, `no_unopened_packs`), 422 `validation_failed`, 500 `internal_error`.
+- Walidacja ścisła: typy (liczby całkowite w JSON, nie napisy), zakresy, nieznane pola odrzucane. Nigdy nie zwracaj haszy haseł, tokenów ani komunikatów PDO.
+- Nieobsłużony wyjątek na ścieżce zaczynającej się od `/api/` zwraca JSON 500 (`internal_error`) zamiast strony HTML; szczegóły trafiają do `system_logs`.
+- Reguła Post/Redirect/Get nie dotyczy tras `/api/`.
+
+## Frontend (CSS/JS)
+
+- Czysty JavaScript (moduły ES) w `public/js/`, bez bibliotek i bez kroku budowania. Strony renderuje serwer; JS rozszerza tylko interaktywną stronę paczek.
+- Całe Fetch API przechodzi przez jeden moduł `public/js/api.js`: `credentials: 'same-origin'`, nagłówki `Accept` i `Content-Type: application/json`, `X-CSRF-Token` z `<meta name="csrf-token">`, timeout 10 s przez `AbortController`, parsowanie JSON, mapowanie statusów HTTP na błędy z `code` i `message`. UI zawsze pokazuje stan ładowania (`aria-busy`), sukces i błąd.
+- Dane z JSON wstawiaj przez `textContent` i API DOM, nigdy przez `innerHTML`.
+- Animacje w CSS (tylko `transform` i `opacity`), wyłączane przy `prefers-reduced-motion: reduce` (wynik od razu widoczny).
+- Dźwięk przez Web Audio API w `public/js/sound.js` (synteza, bez plików audio), `AudioContext` tworzony leniwie po geście użytkownika, z poszanowaniem ustawień `sound_enabled` i `sound_volume`.
+- Dostępność: interaktywne elementy to prawdziwe `<button>`, widoczny fokus, obsługa klawiatury, wyniki ogłaszane przez region `aria-live="polite"`.
+- CSS w BEM, korzystaj z tokenów z `public/css/style.css`.
 
 ## Konwencje kodu
 
@@ -138,6 +169,7 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 Nie traktuj poniższych jako błędów do „naprawienia” bez polecenia:
 
 - Formularze avatar upload i promo code w `/profile` nie mają tras POST (celowy placeholder do czasu wdrożenia kolekcji i punktów).
+- `public/js/sound.js` jest placeholderem: `configure()` i `play()` nic nie robią, więc ustawienia dźwięku są zapisywane, ale nie odtwarzają audio.
 - Routing obsługuje tylko parametry numeryczne (świadome, tymczasowe).
 - Katalog `src/controllers` (mała litera) odbiega od PSR-4 (`src/Controller`) i działa
   dzięki osobnemu mapowaniu w `composer.json`. Zmiana nazwy jest planowana, ale

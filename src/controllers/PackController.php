@@ -5,34 +5,40 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Database;
-use App\Repository\PackRepository;
 use App\Repository\LogRepository;
-use App\Session;
+use App\Repository\PackRepository;
+use App\Repository\RarityRepository;
+use App\Repository\UserSettingsRepository;
 
 final class PackController extends AppController
 {
-    public function open(): void
+    public function index(): void
     {
         $user = $this->requireLogin();
-        $this->verifyCsrfOrAbort();
+        $this->noCache();
 
         $pdo = (new Database())->connect();
         $packRepository = new PackRepository($pdo, new LogRepository($pdo));
+        $rarityRepository = new RarityRepository($pdo);
+        $userSettingsRepository = new UserSettingsRepository($pdo);
 
-        try {
-            $openingId = $packRepository->open($user->getId());
-            $this->redirect('/packs/' . (int) $openingId);
-        } catch (\DomainException $exception) {
-            $message = $exception->getMessage();
+        $packSettings = $packRepository->settings();
+        $userSettings = $userSettingsRepository->find($user->getId());
+        $rarities = $rarityRepository->odds();
+        $history = $packRepository->historyByUser($user->getId(), 0, 10);
 
-            if ($message === 'insufficient_points') {
-                Session::flash('error', 'Not enough points to open a pack.');
-            } else {
-                Session::flash('error', 'Could not open pack.');
-            }
-
-            $this->redirect('/profile');
-        }
+        $this->render('packs', [
+            'pageTitle' => 'Packs – StreamRip',
+            'points' => $user->getPoints(),
+            'unopenedPacks' => $user->getUnopenedPacks(),
+            'packSettings' => $packSettings,
+            'userSettings' => $userSettings,
+            'rarities' => $rarities,
+            'rarityLevels' => $this->rarityLevels($rarities),
+            'history' => $history['items'],
+            'historyHasMore' => $history['hasMore'],
+            'historyNextOffset' => count($history['items']),
+        ]);
     }
 
     public function show(int $id): void
@@ -54,15 +60,24 @@ final class PackController extends AppController
             return;
         }
 
-        $settings = $packRepository->settings();
+        $rarities = (new RarityRepository($pdo))->odds();
 
         $this->render('pack', [
             'pageTitle' => 'Pack opening – StreamRip',
             'opening' => $opening,
-            'cards' => $opening->getCards(),
-            'pointsSpent' => $opening->getPointsSpent(),
-            'openedAt' => $opening->getOpenedAt()->format('Y-m-d H:i:s'),
-            'cardsPerPack' => $settings['cards_per_pack'],
+            'openingCards' => $opening->getCards(),
+            'rarityLevels' => $this->rarityLevels($rarities),
         ]);
+    }
+
+    private function rarityLevels(array $rarities): array
+    {
+        $levels = [];
+
+        foreach ($rarities as $rarity) {
+            $levels[$rarity->getCode()] = $rarity->getLevel();
+        }
+
+        return $levels;
     }
 }

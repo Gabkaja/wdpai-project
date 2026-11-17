@@ -52,6 +52,7 @@ final class Session
     {
         session_regenerate_id(true);
         $_SESSION['user_id'] = $userId;
+        self::csrfToken();
     }
 
     public static function logout(): void

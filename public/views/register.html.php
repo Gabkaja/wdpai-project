@@ -34,7 +34,7 @@
                     <div class="auth-form__field<?= isset($errors['username']) ? ' auth-form__field--error' : '' ?>">
                         <div class="auth-form__label-row">
                             <label class="auth-form__label" for="reg-username">Username (Kick nickname)</label>
-                            <span class="auth-form__hint">Required</span>
+                            <span class="auth-form__hint" id="reg-username-hint">Required</span>
                         </div>
                         <div class="auth-form__input-wrap">
                             <span class="icon auth-form__input-icon" aria-hidden="true">person</span>
@@ -48,7 +48,7 @@
                     <div class="auth-form__field<?= isset($errors['email']) ? ' auth-form__field--error' : '' ?>">
                         <div class="auth-form__label-row">
                             <label class="auth-form__label" for="reg-email">E-mail</label>
-                            <span class="auth-form__hint">Required</span>
+                            <span class="auth-form__hint" id="reg-email-hint">Required</span>
                         </div>
                         <div class="auth-form__input-wrap">
                             <span class="icon auth-form__input-icon" aria-hidden="true">alternate_email</span>
@@ -77,7 +77,7 @@
                     <div class="auth-form__field<?= isset($errors['password_repeat']) ? ' auth-form__field--error' : '' ?>">
                         <div class="auth-form__label-row">
                             <label class="auth-form__label" for="reg-password-repeat">Repeat password</label>
-                            <span class="auth-form__hint">Required</span>
+                            <span class="auth-form__hint" id="reg-password-repeat-hint">Required</span>
                         </div>
                         <div class="auth-form__input-wrap">
                             <span class="icon auth-form__input-icon" aria-hidden="true">key</span>

@@ -13,15 +13,17 @@ final class User
     private readonly string $email;
     private readonly string $role;
     private readonly int $points;
+    private readonly int $unopenedPacks;
     private readonly DateTimeImmutable $createdAt;
 
-    public function __construct(int $id, string $username, string $email, string $role, int $points, DateTimeImmutable $createdAt)
+    public function __construct(int $id, string $username, string $email, string $role, int $points, int $unopenedPacks, DateTimeImmutable $createdAt)
     {
         $this->id = $id;
         $this->username = $username;
         $this->email = $email;
         $this->role = $role;
         $this->points = $points;
+        $this->unopenedPacks = $unopenedPacks;
         $this->createdAt = $createdAt;
     }
 
@@ -48,6 +50,11 @@ final class User
     public function getPoints(): int
     {
         return $this->points;
+    }
+
+    public function getUnopenedPacks(): int
+    {
+        return $this->unopenedPacks;
     }
 
     public function getCreatedAt(): DateTimeImmutable

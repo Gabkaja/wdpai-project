@@ -7,6 +7,10 @@ $navItems = [
     ['href' => '/leaderboard', 'label' => 'Leaderboard'],
 ];
 
+if (isset($currentUser) && $currentUser !== null) {
+    $navItems[] = ['href' => '/packs', 'label' => 'Packs'];
+}
+
 if (isset($currentUser) && $currentUser !== null && $currentUser->getRole() === 'admin') {
     $navItems[] = ['href' => '/admin', 'label' => 'Admin'];
 }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Database;
-use App\Repository\CardRepository;
 use App\Repository\CollectionRepository;
 use App\Repository\KickAccountRepository;
+use App\Repository\LogRepository;
 use App\Repository\PackRepository;
 
 final class ProfileController extends AppController
@@ -17,12 +17,9 @@ final class ProfileController extends AppController
         $user = $this->requireLogin();
 
         $pdo = (new Database())->connect();
-        $packRepository = new PackRepository($pdo, new \App\Repository\LogRepository($pdo));
         $collectionRepository = new CollectionRepository($pdo);
         $kickAccount = (new KickAccountRepository($pdo))->findByUserId($user->getId());
-        $settings = $packRepository->settings();
         $collection = $collectionRepository->forUser($user->getId());
-        $recentOpenings = $packRepository->recentByUser($user->getId(), 5);
 
         $totalCards = 0;
         $uniqueCards = count($collection);
@@ -31,7 +28,7 @@ final class ProfileController extends AppController
             $totalCards += $item->getQuantity();
         }
 
-        $packsOpened = $packRepository->countByUser($user->getId());
+        $packsOpened = (new PackRepository($pdo, new LogRepository($pdo)))->countByUser($user->getId());
 
         $this->render('profile', [
             'pageTitle' => 'My profile – StreamRip',
@@ -48,9 +45,8 @@ final class ProfileController extends AppController
                 'rank' => 12,
                 'favoriteCard' => 'System Annihilator',
             ],
+            'unopenedPacks' => $user->getUnopenedPacks(),
             'collection' => $collection,
-            'recentOpenings' => $recentOpenings,
-            'packSettings' => $settings,
             'kickAccount' => $kickAccount,
         ]);
     }

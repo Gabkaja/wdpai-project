@@ -19,7 +19,7 @@ final class UserRepository
 
     public function all(): array
     {
-        $statement = $this->pdo->query('SELECT id, username, email, role, points, created_at FROM users ORDER BY id');
+        $statement = $this->pdo->query('SELECT id, username, email, role, points, unopened_packs, created_at FROM users ORDER BY id');
 
         $users = [];
 
@@ -30,6 +30,7 @@ final class UserRepository
                 $row['email'],
                 $row['role'],
                 (int) $row['points'],
+                (int) $row['unopened_packs'],
                 new DateTimeImmutable($row['created_at'])
             );
         }
@@ -39,7 +40,7 @@ final class UserRepository
 
     public function findById(int $id): ?User
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, role, points, created_at FROM users WHERE id = :id');
+        $statement = $this->pdo->prepare('SELECT id, username, email, role, points, unopened_packs, created_at FROM users WHERE id = :id');
 
         $statement->execute([':id' => $id]);
 
@@ -72,7 +73,7 @@ final class UserRepository
 
     public function create(string $username, string $email, string $passwordHash): User
     {
-        $statement = $this->pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:username, :email, :password_hash) RETURNING id, username, email, role, points, created_at');
+        $statement = $this->pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:username, :email, :password_hash) RETURNING id, username, email, role, points, unopened_packs, created_at');
 
         $statement->execute([
             ':username' => $username,
@@ -91,7 +92,7 @@ final class UserRepository
 
     public function findByEmailWithHash(string $email): ?array
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, role, points, created_at FROM users WHERE LOWER(email) = LOWER(:email)');
+        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, role, points, unopened_packs, created_at FROM users WHERE LOWER(email) = LOWER(:email)');
 
         $statement->execute([':email' => $email]);
 
@@ -144,6 +145,7 @@ final class UserRepository
             $row['email'],
             $row['role'],
             (int) $row['points'],
+            (int) $row['unopened_packs'],
             new DateTimeImmutable($row['created_at'])
         );
     }
@@ -156,6 +158,7 @@ final class UserRepository
             $row['email'],
             $row['role'],
             (int) $row['points'],
+            (int) $row['unopened_packs'],
             new DateTimeImmutable($row['created_at'])
         );
     }

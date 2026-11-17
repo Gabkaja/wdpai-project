@@ -10,15 +10,13 @@ final class PackOpening
 {
     private readonly int $id;
     private readonly int $userId;
-    private readonly int $pointsSpent;
     private readonly DateTimeImmutable $openedAt;
-    private array $cards;
+    private readonly array $cards;
 
-    public function __construct(int $id, int $userId, int $pointsSpent, DateTimeImmutable $openedAt, array $cards = [])
+    public function __construct(int $id, int $userId, DateTimeImmutable $openedAt, array $cards = [])
     {
         $this->id = $id;
         $this->userId = $userId;
-        $this->pointsSpent = $pointsSpent;
         $this->openedAt = $openedAt;
         $this->cards = $cards;
     }
@@ -31,11 +29,6 @@ final class PackOpening
     public function getUserId(): int
     {
         return $this->userId;
-    }
-
-    public function getPointsSpent(): int
-    {
-        return $this->pointsSpent;
     }
 
     public function getOpenedAt(): DateTimeImmutable
