@@ -57,8 +57,9 @@
                 <p class="packs__pack-note"><?= (int) $packSettings['cards_per_pack'] ?> cards per pack</p>
             </div>
         </div>
-    </section>    <div class="packs__panels">
-        <section id="buy" class="packs__buy" aria-labelledby="buy-heading">
+    </section>    <div class="packs__grid">
+        <div class="packs__main">
+            <section id="buy" class="packs__buy" aria-labelledby="buy-heading">
             <div class="container">
                 <div class="packs__panel-header">
                     <h2 class="packs__heading" id="buy-heading">
@@ -120,9 +121,70 @@
                         <p class="packs__hint">No unopened packs in stock. <a href="#buy">Buy packs first</a>.</p>
                     <?php endif; ?>
                 </form>
-            </div>
-        </section>
-    </div>    <section class="packs__settings" aria-labelledby="settings-heading">
+            </section>
+
+            <section class="collection" aria-labelledby="collection-heading">
+                <div class="container">
+                    <div class="collection__header">
+                        <h2 class="collection__heading" id="collection-heading">
+                            <span class="icon" aria-hidden="true">inventory</span>
+                            Your collection
+                        </h2>
+                        <p class="collection__summary">
+                            <span class="collection__summary-value" data-summary="unique">–</span> /
+                            <span class="collection__summary-value" data-summary="total">–</span> unique cards,
+                            <span class="collection__summary-value" data-summary="quantity">–</span> total
+                        </p>
+                    </div>
+
+                    <div class="collection__toolbar">
+                        <label class="collection__label" for="collection-rarity">Rarity</label>
+                        <select class="collection__select" id="collection-rarity" name="rarity">
+                            <option value="">All rarities</option>
+                            <?php foreach ($rarities as $rarity): ?>
+                                <option value="<?= htmlspecialchars($rarity->getCode()) ?>"><?= htmlspecialchars($rarity->getName()) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <label class="collection__label" for="collection-sort">Sort</label>
+                        <select class="collection__select" id="collection-sort" name="sort">
+                            <option value="rarity">Rarity</option>
+                            <option value="name">Name</option>
+                            <option value="quantity">Quantity</option>
+                            <option value="recent">Recently obtained</option>
+                        </select>
+
+                        <label class="collection__label" for="collection-search">Search</label>
+                        <input class="collection__input" id="collection-search" name="q" type="search" placeholder="Search cards…">
+                    </div>
+
+                    <p class="collection__loading" hidden>Loading…</p>
+
+                    <ol class="collection__grid" role="list" data-collection-list></ol>
+
+                    <div class="collection__empty" hidden>
+                        <p class="collection__empty-text" id="collection-empty-text">You don't have any cards yet.</p>
+                    </div>
+
+                    <button class="button button--secondary collection__load-more" type="button" data-action="load-more" hidden>Load more</button>
+
+                    <div class="collection__error" hidden role="alert">
+                        <p class="collection__error-message"></p>
+                        <button class="button button--primary collection__retry" type="button">Retry</button>
+                    </div>
+
+                    <template data-template="collection-item">
+                        <li class="collection__card">
+                            <span class="collection__chip rarity-chip" aria-hidden="true"></span>
+                            <span class="collection__name"></span>
+                            <span class="collection__quantity">×1</span>
+                        </li>
+                    </template>
+                </div>
+            </section>
+        </div>
+        <aside class="packs__sidebar">
+            <section class="packs__settings" aria-labelledby="settings-heading">
         <div class="container">
             <div class="packs__panel-header">
                 <h2 class="packs__heading" id="settings-heading">
@@ -280,6 +342,8 @@
             </template>
         </div>
     </section>
+        </aside>
+    </div>
 
     <noscript class="packs__noscript">
         <p>This page requires JavaScript. Enable JavaScript to buy and open packs.</p>

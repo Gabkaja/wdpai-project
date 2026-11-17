@@ -5134,6 +5134,194 @@ main {
   }
 }
 
+.packs__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.packs__main {
+  flex: 1;
+}
+
+.packs__sidebar {
+  flex: 0 0 26rem;
+}
+
+@media (min-width: 48rem) {
+  .packs__grid {
+    flex-direction: row;
+  }
+}
+
+/* 15. Collection
+   -------------------------------------------------------------------------- */
+.collection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.collection__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.collection__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  line-height: var(--line-heading);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+}
+
+.collection__summary {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+}
+
+.collection__summary-value {
+  color: var(--color-brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.collection__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: var(--space-sm-2) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-low);
+  border: var(--border-width) solid var(--color-border);
+}
+
+.collection__label {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.collection__select,
+.collection__input {
+  flex-shrink: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  background: var(--color-surface-container);
+  font: inherit;
+  font-size: var(--fs-md);
+}
+
+.collection__input {
+  width: 14rem;
+}
+
+.collection__loading {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+}
+
+.collection__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collection__card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container);
+  border: var(--border-width) solid var(--color-border);
+}
+
+.collection__chip {
+  flex-shrink: 0;
+}
+
+.collection__name {
+  min-width: 0;
+  color: var(--color-text);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection__quantity {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.collection__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-low);
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  text-align: center;
+}
+
+.collection__load-more {
+  width: 100%;
+  margin-top: var(--space-xs);
+}
+
+.collection__error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-error-bg);
+  border: var(--border-width) solid var(--color-error-border);
+  color: var(--color-error);
+}
+
+.collection__error-message {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.collection__retry {
+  align-self: flex-start;
+}
+
+.collection__retry:focus-visible {
+  outline: var(--focus-ring) solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .packs__pack-shine,
   .button--loading::after,
