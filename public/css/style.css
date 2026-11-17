@@ -5152,6 +5152,54 @@ main {
   .packs__grid {
     flex-direction: row;
   }
+
+  .packs__sidebar {
+    position: sticky;
+    top: var(--size-header-min);
+    max-height: calc(100dvh - var(--space-xl));
+    overflow-y: auto;
+  }
+}
+
+/* 15a. Pack sidebar
+   -------------------------------------------------------------------------- */
+.pack-sidebar__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-low);
+}
+
+.pack-sidebar__section > .container {
+  padding: var(--space-md);
+}
+
+.pack-sidebar__title {
+  display: block;
+  padding: var(--space-sm) var(--space-md);
+  margin: 0;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  text-align: left;
+  width: 100%;
+}
+
+.pack-sidebar__title::-webkit-details-marker {
+  display: none;
+}
+
+.pack-sidebar__title:focus-visible {
+  outline: var(--focus-ring) solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 /* 15. Collection
