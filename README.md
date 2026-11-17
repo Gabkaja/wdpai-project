@@ -9,8 +9,10 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 |---|---|
 | Home | Stream banner, live stats and a card catalog with rarity filters |
 | Card catalog | All cards (`/cards`) and card details (`/cards/{id}`) |
-| Profile | Collection stats, owned cards and pack opening form (requires login); avatar upload and promo code forms have no POST routes yet |
-| Pack opening | Open a booster pack (`/packs/open`, POST, requires login); view opening result (`/packs/{id}`, GET, owner only). Points are deducted in a single transaction and results are stored per user |
+| Profile | Collection stats, owned cards and pack wallet (requires login); avatar upload and promo code forms have no POST routes yet |
+| Packs | Buy packs and open them from stock (`/packs`, requires login). Buying and opening are separate transactions; results are stored per user |
+| Pack opening result | Read-only opening view (`/packs/{id}`, owner only) with revealed cards, NEW markers, rarity glow and the opening date |
+| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs` and `/api/packs/history` (login, JSON envelope, CSRF on POST) |
 | Leaderboard | Podium and the full collector ranking, including packs opened per user |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
@@ -72,23 +74,32 @@ Stop the stack: `docker compose down` (including volume data: `docker compose do
 ```
 public/index.php              # front controller — the only HTTP entry point
 public/css/style.css          # styles (tokens + components)
-public/views/*.html.php       # views (full pages)
+public/js/                    # ES modules (no build step)
+public/js/api.js              # Fetch API client: CSRF header, timeout, JSON envelope mapping
+public/js/theme.js            # light/dark theme toggle and password visibility helper
+public/js/sound.js            # Web Audio hook (currently a placeholder: configure/play are no-ops)
+public/js/packs/              # packs page modules: index, state, buy, open, settings, history, stage, ui, messages
+public/views/*.html.php       # views (content fragments inserted into the layout)
+public/views/layout.html.php  # shared layout (header, content, footer)
 public/views/partials/*.php   # partials: header, footer, card-list
 src/Routing.php               # route registration and dispatch
 src/controllers/              # controllers (App\Controller namespace)
 src/Model/                    # data models (App\Model namespace)
-src/Repository/               # data sources (App\Repository namespace)
 src/Database.php              # PDO connection factory
 src/Session.php               # native PHP session management (start, login, logout, CSRF, Kick OAuth state)
 src/Service/                  # external service clients
 src/Service/KickClient.php    # Kick OAuth 2.1 client (authorize URL, token exchange, current user)
 src/Repository/               # data sources (App\Repository namespace)
-src/Repository/PackRepository.php   # pack opening transaction, opening history and settings
-src/Repository/KickAccountRepository.php   # kick_accounts table access
+src/Repository/PackRepository.php           # pack buying/opening transactions, openings and history
+src/Repository/UserSettingsRepository.php   # per-user pack opening settings
+src/Repository/RarityRepository.php         # rarities and drop odds (LEFT JOIN cards)
+src/Repository/KickAccountRepository.php    # kick_accounts table access
 database/                     # numbered SQL scripts (schema, views, seed data)
 database/04-kick-accounts.sql # kick_accounts table
-database/05-packs.sql         # pack_settings, pack_openings, pack_opening_cards tables and rarity drop weights
+database/05-packs.sql         # pack_settings, pack_openings, pack_opening_cards and rarity drop weights
 database/06-leaderboard-packs.sql # leaderboard_view with packs_opened column
+database/07-pack-stock-and-settings.sql # users.unopened_packs, pack_purchases, user_settings, is_new
+database/08-pack-purchase-limit.sql    # pack_settings.max_purchase_packs
 docker/                       # nginx, php and db configuration
 ```
 
@@ -133,18 +144,31 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 | POST | `/admin/users/{id}/points` | admin | `AdminController::grantPoints` |
 | GET | `/overlay` | public | `OverlayController::index` |
 | POST | `/logout` | logged in | `SecurityController::logout` |
-| POST | `/packs/open` | logged in | `PackController::open` |
+| GET | `/packs` | logged in | `PackController::index` |
 | GET | `/packs/{id}` | logged in (owner only) | `PackController::show` |
 | GET | `/auth/kick/login` | public | `KickController::login` |
 | GET | `/auth/kick/callback` | public | `KickController::callback` |
 | GET | `/profile/kick/connect` | logged in | `KickController::connect` |
 | POST | `/profile/kick/unlink` | logged in | `KickController::unlink` |
 
+### JSON API
+
+Every `/api/...` route answers JSON only (`Cache-Control: no-store`), never redirects,
+and the Post/Redirect/Get rule does not apply. Login is required and checked before
+the body is read; POST routes also require the `X-CSRF-Token` header.
+
+| Method | Path | Access | Action | Status codes |
+|---|---|---|---|---|
+| `POST` | `/api/packs/buy` | logged in + CSRF | `PackApiController::buy` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 409 `insufficient_points`, 422 `validation_failed` / `invalid_quantity`, 500 `internal_error` |
+| `POST` | `/api/packs/open` | logged in + CSRF | `PackApiController::open` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 409 `no_unopened_packs`, 422 `validation_failed` / `invalid_quantity`, 500 `internal_error` |
+| `POST` | `/api/settings/packs` | logged in + CSRF | `PackApiController::saveSettings` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
+| `GET` | `/api/packs/history?offset=&limit=` | logged in | `PackApiController::history` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
+
 ## Project status
 
 The project is under active development. Known placeholders:
 
-- **Profile forms** — the pack opening form on `/profile` has a POST route (`POST /packs/open`); the avatar upload and promo code forms still render but cannot be submitted.
+- **Profile forms** — the avatar upload and promo code forms still render but have no POST routes (`/profile/avatar`, `/profile/redeem`). Packs are bought and opened on `/packs`.
 - **Role change in admin panel** — the admin panel lists roles (`viewer`, `admin`) but changing a user's role has no POST route yet.
 - **Shared layout** — views are rendered inside `public/views/layout.html.php`, which includes the `header` and `footer` partials. Views do not call them directly.
 - **Numeric route parameters only** (`\d+`).
@@ -233,35 +257,51 @@ The foreign key uses `ON DELETE CASCADE`: when a StreamRip user is deleted, thei
 Kick points / balance are not available through the public API used here, so they are not fetched or displayed.
 
 
-### Pack opening
+### Pack buying and opening
 
-Opening a booster pack is a single database transaction in `PackRepository::open()`:
+Packs are bought and opened in separate transactions. Every `\Throwable` triggers
+`rollBack()` (if a transaction is still active) and is re-thrown. Business errors are
+`\DomainException` values with a stable code in the message: `insufficient_points`,
+`no_unopened_packs`, `invalid_quantity`, `user_not_found`, `pack_not_configured`.
+
+#### Buying (`PackRepository::buy()`)
 
 1. `beginTransaction()`.
-2. `SELECT points FROM users WHERE id = :id FOR UPDATE` — locks the user's row so concurrent pack openings on the same account are serialized. If the user does not exist, throws `\DomainException('user_not_found')`.
-3. Reads `cards_per_pack` and `cost_points` from `pack_settings` (single row, `id = 1`). If missing, throws `\DomainException('pack_not_configured')`.
-4. If the user's points are below `cost_points`, throws `\DomainException('insufficient_points')` — no points are spent and no opening is recorded.
-5. Draws rarity by weight from `rarities` where `drop_weight > 0`, then draws a random card of that rarity. Repeats `cards_per_pack` times. Cards may repeat.
-6. `UPDATE users SET points = points - :cost WHERE id = :id`.
-7. `INSERT INTO pack_openings (user_id, points_spent) VALUES (...) RETURNING id`.
-8. Inserts one row per drawn card into `pack_opening_cards` (slot 1..N).
-9. `INSERT INTO user_cards ... ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1`.
-10. Writes an `info` entry to `system_logs` on the same PDO connection so the log is part of the transaction.
-11. `commit()`.
+2. `SELECT points, unopened_packs FROM users WHERE id = :id FOR UPDATE` — locks the user's row; if the user does not exist, throws `user_not_found`.
+3. Reads `cards_per_pack`, `cost_points`, `max_bulk_packs` and `max_purchase_packs` from `pack_settings` (`id = 1`); if missing, throws `pack_not_configured`.
+4. Rejects a quantity outside `1..max_purchase_packs` with `invalid_quantity`.
+5. Computes `total = cost_points * quantity`; if `points < total`, throws `insufficient_points` — nothing is spent and no purchase row is written.
+6. `UPDATE users SET points = points - :total, unopened_packs = unopened_packs + :quantity WHERE id = :id`.
+7. `INSERT INTO pack_purchases (user_id, quantity, points_spent)`.
+8. Writes an `info` entry to `system_logs` on the same connection.
+9. `commit()`.
 
-**Why `FOR UPDATE`**: without the row lock, two concurrent pack openings could both read the same points balance, both pass the balance check, and both deduct points — resulting in an overdraft. The lock serializes the check-and-deduct for one user.
+#### Opening (`PackRepository::openFromStock()`)
 
-**Error handling**: every `\Throwable` triggers `rollBack()` (if still in transaction) and re-throws the exception. The central handler in `public/index.php` logs it to `system_logs` and shows a 500 page; `DomainException` cases (`insufficient_points`, `pack_not_configured`, `user_not_found`) are caught in `PackController::open()` and turned into a flash message with a redirect to `/profile`.
+1. `beginTransaction()`.
+2. `SELECT unopened_packs FROM users WHERE id = :id FOR UPDATE`; a missing user throws `user_not_found`.
+3. Reads the same `pack_settings` row; rejects a count outside `1..max_bulk_packs` with `invalid_quantity`, and a count above the stock with `no_unopened_packs`.
+4. `UPDATE users SET unopened_packs = unopened_packs - :count WHERE id = :id`.
+5. Loads the draw pool: rarities with `drop_weight > 0` joined with their cards.
+6. For each opened pack: `INSERT INTO pack_openings (user_id) ... RETURNING id`; draws `cards_per_pack` cards; upserts each drawn card into `user_cards ... ON CONFLICT (user_id, card_id) DO UPDATE ... RETURNING quantity`; inserts `pack_opening_cards (opening_id, slot, card_id, is_new)`, where `is_new` is true when the upsert returns quantity `1`.
+7. Writes an `info` entry with the opening ids to `system_logs`.
+8. `commit()`.
 
-**Randomness**: rarity is chosen by cumulative weight using `random_int(1, $totalWeight)`; the card within the rarity is chosen by `random_int(0, count($cards) - 1)`. `rand()`/`mt_rand()` are never used.
+**Why `FOR UPDATE`**: without the row lock, two concurrent requests could both read the same balance or stock, both pass the check, and both deduct — causing an overdraft or negative stock. The lock serializes the check-and-deduct per user. Buying and opening are independent, so buying never draws cards and opening never spends points.
+
+**Randomness**: each card is drawn independently. First the rarity is selected by cumulative weight using `random_int(1, $totalWeight)` (rarities without weight or without cards are skipped); then a card from that rarity is selected with `random_int(0, count($cards) - 1)`. Cards may repeat across packs and within a pack. `rand()`/`mt_rand()` are never used.
+
+**Reading results**: `GET /packs/{id}` loads one opening with its cards and `is_new` flags. Only the owner can see it; a missing or foreign opening returns `404`. The page is read-only: all cards are rendered already revealed, with the same card component, NEW marker and rarity glow as the opening scene.
 
 ### Tuning packs
 
 Pack parameters live in the database, not in PHP. Adjust them with SQL:
 
 ```sql
--- Change pack cost (points) and number of cards per pack
-UPDATE pack_settings SET cards_per_pack = 5, cost_points = 150 WHERE id = 1;
+-- Change pack cost, cards per pack, bulk open limit and purchase limit
+UPDATE pack_settings
+SET cards_per_pack = 5, cost_points = 150, max_bulk_packs = 10, max_purchase_packs = 500
+WHERE id = 1;
 
 -- Change rarity drop weights (sum should stay 100 for percentage-like distribution)
 UPDATE rarities SET drop_weight = 50 WHERE code = 'common';
@@ -275,6 +315,75 @@ UPDATE rarities SET drop_weight = 0 WHERE code = 'legendary';
 
 After changing weights, verify the total: `SELECT code, drop_weight FROM rarities ORDER BY sort_order;`.
 
+### Pack opening settings
+
+Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsRepository::find()` returns the defaults when no row exists (`auto`, `queue`, sound on, volume `70`); saving is an UPSERT. The defaults in PHP and in the `CHECK` constraints of `database/07-pack-stock-and-settings.sql` are identical.
+
+| Column | Values | Default | Effect |
+|---|---|---|---|
+| `reveal_mode` | `auto`, `manual` | `auto` | Auto reveals cards one by one; manual lets the viewer click each card in any order |
+| `multi_open_mode` | `queue`, `all_at_once` | `queue` | Queue reveals one pack at a time; all-at-once builds every pack on one stage |
+| `sound_enabled` | boolean | `true` | Passed to the sound module |
+| `sound_volume` | `0..100` | `70` | Passed to the sound module |
+
+The values are read from `data-*` attributes on `[data-packs-root]` by `public/js/packs/settings.js` and saved through `POST /api/settings/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored.
+
+With `prefers-reduced-motion: reduce`, the CSS disables the reveal/tear transitions and burst animations; in auto mode the stage reveals the remaining cards immediately instead of animating them.
+
+### Fetch API and JSON API
+
+The packs page is rendered by the server; plain ES modules only extend it and there is no build step. Every request goes through `public/js/api.js`:
+
+- `credentials: 'same-origin'`, with `Accept: application/json` and `Content-Type: application/json` headers.
+- `X-CSRF-Token` copied from `<meta name="csrf-token">` (rendered by the layout only for logged-in users).
+- 10-second timeout implemented with `AbortController`.
+- The body is parsed as JSON; a non-JSON body, a non-`2xx` status or a missing envelope becomes an `ApiError` with `status`, `code`, `message` and `fields`.
+
+The modules are split by responsibility: `api.js` (transport), `theme.js` (theme toggle), `sound.js` (audio hook), and under `public/js/packs/`: `index.js` (bootstrap), `state.js` (sliders and counters), `buy.js`, `open.js`, `settings.js`, `history.js`, `stage.js` (reveal scene and timers), `ui.js` (busy/status helpers) and `messages.js` (error text). UI always exposes a loading state with `aria-busy`, a success message and an error message.
+
+Response envelope:
+
+```json
+{"ok": true, "data": {}}
+{"ok": false, "error": {"code": "snake_case", "message": "English text", "fields": {}}}
+```
+
+`fields` is present only for `422 validation_failed` (and `invalid_quantity`). Every response carries `Cache-Control: no-store`. Validation is strict: integers must be JSON numbers (not strings), ranges are enforced and unknown fields are rejected.
+
+| Status | `code` | When |
+|---|---|---|
+| 400 | `invalid_json` | Body is not a JSON object |
+| 401 | `unauthenticated` | No valid session (JSON, no redirect) |
+| 403 | `csrf_failed` | Missing or invalid `X-CSRF-Token` on a POST |
+| 404 | `not_found` | Unknown `/api/...` route |
+| 409 | `insufficient_points` | Buying costs more than the current balance |
+| 409 | `no_unopened_packs` | Opening more packs than the stock |
+| 422 | `validation_failed` | Missing/invalid fields or unknown fields |
+| 422 | `invalid_quantity` | Quantity outside `1..max_purchase_packs` or `1..max_bulk_packs` |
+| 500 | `internal_error` | Uncaught server exception (details go to `system_logs`) |
+
+Example request and response:
+
+```http
+POST /api/packs/buy
+Content-Type: application/json
+X-CSRF-Token: <token from <meta name="csrf-token">>
+
+{"quantity": 3}
+```
+
+```json
+{
+  "ok": true,
+  "data": {
+    "points": 550,
+    "unopened_packs": 3,
+    "purchased": 3,
+    "points_spent": 450
+  }
+}
+```
+
 ### Entity-relationship diagram
 
 ```mermaid
@@ -283,6 +392,8 @@ erDiagram
     users ||--o{ user_cards : owns
     users ||--o{ system_logs : generates
     users ||--o{ pack_openings : opens
+    users ||--o{ pack_purchases : buys
+    users ||--o| user_settings : configures
     pack_openings ||--|{ pack_opening_cards : contains
     cards ||--o{ pack_opening_cards : appears_in
     cards ||--o{ system_logs : referenced_in
@@ -302,23 +413,41 @@ erDiagram
         varchar password_hash
         varchar role
         int points
+        int unopened_packs
         timestamptz created_at
     }
     pack_settings {
         smallint id PK
         smallint cards_per_pack
         int cost_points
+        smallint max_bulk_packs
+        int max_purchase_packs
+    }
+    pack_purchases {
+        bigint id PK
+        bigint user_id FK
+        int quantity
+        int points_spent
+        timestamptz purchased_at
+    }
+    user_settings {
+        bigint user_id PK,FK
+        varchar reveal_mode
+        varchar multi_open_mode
+        boolean sound_enabled
+        smallint sound_volume
+        timestamptz updated_at
     }
     pack_openings {
         bigint id PK
         bigint user_id FK
-        int points_spent
         timestamptz opened_at
     }
     pack_opening_cards {
         bigint opening_id PK,FK
         smallint slot PK
         bigint card_id FK
+        boolean is_new
     }
     cards {
         bigint id PK
@@ -361,6 +490,8 @@ erDiagram
 | `cards.rarity_id` → `rarities.id` | `rarities` | `RESTRICT` | A rarity is a dictionary value; it cannot be deleted while cards reference it. |
 | `system_logs.user_id` → `users.id` | `users` | `SET NULL` | Event history must survive user deletion; the user reference becomes NULL. |
 | `pack_openings.user_id` → `users.id` | `users` | `CASCADE` | A pack opening record belongs to its opener; removing the user removes their opening history. |
+| `pack_purchases.user_id` → `users.id` | `users` | `CASCADE` | A purchase belongs to its buyer; removing the user removes their purchase history. |
+| `user_settings.user_id` → `users.id` | `users` | `CASCADE` | Opening settings only make sense for an existing user. |
 | `pack_opening_cards.opening_id` → `pack_openings.id` | `pack_openings` | `CASCADE` | Opening cards make no sense without the opening record they came from. |
 | `pack_opening_cards.card_id` → `cards.id` | `cards` | `RESTRICT` | A card cannot be removed while an opening record references it. |
 | `kick_accounts.user_id` → `users.id` | `users` | `CASCADE` | Removing a StreamRip user also removes their Kick link. |
@@ -385,8 +516,12 @@ Defined in `database/02-views.sql` and extended by `database/06-leaderboard-pack
 | `GET /admin` | `AdminController::index` | `LogRepository::latest(50)` | `SELECT l.id, l.level, l.message, u.username, l.created_at FROM system_logs l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.created_at DESC, l.id DESC LIMIT :limit` |
 | `GET /admin` | `AdminController::index` | `RarityRepository::all()` | Rarity query |
 | Error 500 | `public/index.php` catch | `LogRepository::add()` | `INSERT INTO system_logs (level, message, context, user_id) VALUES (:level, :message, CAST(:context AS JSONB), :user_id)` |
-| `POST /packs/open` | `PackController::open` | `PackRepository::open(int)` | `SELECT points FROM users WHERE id = :id FOR UPDATE`, `SELECT cards_per_pack, cost_points FROM pack_settings`, `UPDATE users SET points = points - :cost`, `INSERT INTO pack_openings ... RETURNING id`, `INSERT INTO pack_opening_cards`, `INSERT INTO user_cards ... ON CONFLICT`, `LogRepository::add()` |
-| `GET /packs/{id}` | `PackController::show` | `PackRepository::findOpening(int)`, `PackRepository::settings()` | `SELECT ... FROM pack_openings po JOIN pack_opening_cards poc ... JOIN cards c ... JOIN rarities r ... WHERE po.id = :id ORDER BY poc.slot`, `SELECT cards_per_pack, cost_points FROM pack_settings WHERE id = 1` |
+| `GET /packs` | `PackController::index` | `PackRepository::settings()`, `UserSettingsRepository::find(int)`, `RarityRepository::odds()`, `PackRepository::historyByUser(int, int, int)` | `SELECT cards_per_pack, cost_points, max_bulk_packs, max_purchase_packs FROM pack_settings WHERE id = 1`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume FROM user_settings WHERE user_id = :user_id`; `SELECT r.code, r.name, r.drop_weight, COUNT(c.id) AS card_count FROM rarities r LEFT JOIN cards c ON c.rarity_id = r.id GROUP BY r.id ORDER BY r.sort_order`; history queries below |
+| `GET /packs/{id}` | `PackController::show` | `PackRepository::findOpening(int)`, `RarityRepository::odds()` | `SELECT po.id AS opening_id, po.user_id, po.opened_at, poc.slot, poc.is_new, c..., r.code AS rarity_code, r.name AS rarity_name FROM pack_openings po LEFT JOIN pack_opening_cards poc ON poc.opening_id = po.id LEFT JOIN cards c ON c.id = poc.card_id LEFT JOIN rarities r ON r.id = c.rarity_id WHERE po.id = :id ORDER BY poc.slot`; odds query above |
+| `POST /api/packs/buy` | `PackApiController::buy` | `PackRepository::buy(int, int)` | `SELECT points, unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET points = points - :total, unopened_packs = unopened_packs + :quantity WHERE id = :id`; `INSERT INTO pack_purchases (user_id, quantity, points_spent) VALUES (:user_id, :quantity, :points_spent)`; `LogRepository::add()` |
+| `POST /api/packs/open` | `PackApiController::open` | `PackRepository::openFromStock(int, int)`, `PackRepository::findOpeningsByIds(int, array)`, `UserRepository::findById(int)` | `SELECT unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET unopened_packs = unopened_packs - :count WHERE id = :id`; `INSERT INTO pack_openings (user_id) VALUES (:user_id) RETURNING id`; `INSERT INTO user_cards (user_id, card_id) VALUES (...) ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1 RETURNING quantity`; `INSERT INTO pack_opening_cards (opening_id, slot, card_id, is_new) VALUES (...)`; openings query with `po.user_id = :user_id AND po.id IN (...)`; `SELECT id, username, email, role, points, unopened_packs, created_at FROM users WHERE id = :id` |
+| `POST /api/settings/packs` | `PackApiController::saveSettings` | `UserSettingsRepository::save(int, UserSettings)` | `INSERT INTO user_settings (user_id, reveal_mode, multi_open_mode, sound_enabled, sound_volume, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...` |
+| `GET /api/packs/history` | `PackApiController::history` | `PackRepository::historyByUser(int, int, int)` | `SELECT id FROM pack_openings WHERE user_id = :user_id ORDER BY opened_at DESC, id DESC OFFSET :offset LIMIT :limit`; `SELECT ... FROM pack_openings po LEFT JOIN ... WHERE po.user_id = :user_id AND po.id IN (...) ORDER BY po.id, poc.slot` |
 | `POST /admin/users/{id}/points` | `AdminController::grantPoints` | `UserRepository::addPoints(int, int)`, `LogRepository::add()` | `UPDATE users SET points = points + :amount WHERE id = :id`, `INSERT INTO system_logs ...` |
 
 ### Configuration

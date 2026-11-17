@@ -36,7 +36,10 @@ docker compose exec php composer dump-autoload
 ```
 public/index.php              # front controller — jedyny punkt wejścia HTTP
 public/css/style.css          # style
-public/js/                    # skrypty (moduły ES)
+public/js/api.js              # klient Fetch API (CSRF, timeout, koperta JSON)
+public/js/theme.js            # motyw jasny/ciemny i podgląd hasła
+public/js/sound.js            # hak Web Audio (obecnie placeholder: configure/play nic nie robią)
+public/js/packs/              # moduły strony paczek: index, state, buy, open, settings, history, stage, ui, messages
 public/views/*.html.php       # widoki (fragmenty treści wstawiane do layoutu)
 public/views/layout.html.php  # wspólny layout (header, content, footer)
 public/views/partials/*.php   # partiale: header, footer, card-list
@@ -44,8 +47,13 @@ src/Routing.php               # router (rejestracja + dispatch)
 src/controllers/              # kontrolery (namespace App\Controller)
 src/Model/                    # modele danych (namespace App\Model)
 src/Repository/               # źródła danych (namespace App\Repository)
+src/Repository/PackRepository.php           # kupno i otwieranie paczek, historia
+src/Repository/UserSettingsRepository.php   # ustawienia otwierania per użytkownik
+src/Repository/RarityRepository.php         # rzadkości i szanse (LEFT JOIN cards)
 src/Database.php              # fabryka połączenia PDO
 database/                     # numerowane skrypty SQL (schemat, widoki, dane startowe)
+database/07-pack-stock-and-settings.sql # users.unopened_packs, pack_purchases, user_settings, is_new
+database/08-pack-purchase-limit.sql     # pack_settings.max_purchase_packs
 docker/                       # konfiguracja nginx, php, db
 ```
 
@@ -161,6 +169,7 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 Nie traktuj poniższych jako błędów do „naprawienia” bez polecenia:
 
 - Formularze avatar upload i promo code w `/profile` nie mają tras POST (celowy placeholder do czasu wdrożenia kolekcji i punktów).
+- `public/js/sound.js` jest placeholderem: `configure()` i `play()` nic nie robią, więc ustawienia dźwięku są zapisywane, ale nie odtwarzają audio.
 - Routing obsługuje tylko parametry numeryczne (świadome, tymczasowe).
 - Katalog `src/controllers` (mała litera) odbiega od PSR-4 (`src/Controller`) i działa
   dzięki osobnemu mapowaniu w `composer.json`. Zmiana nazwy jest planowana, ale
