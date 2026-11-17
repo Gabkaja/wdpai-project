@@ -270,17 +270,12 @@
             <button class="button button--secondary packs__load-more" type="button" data-action="load-more" data-next-offset="<?= (int) $historyNextOffset ?>"<?= !$historyHasMore ? ' hidden' : '' ?>>Load more</button>
 
             <template data-template="history-item">
-                <li class="pack-history__item" data-opening-id="{{id}}">
-                    <a class="pack-history__link" href="/packs/{{id}}">
-                        <time class="pack-history__time" datetime="{{openedAt}}">{{date}}</time>
-                        <span class="pack-history__title">Opening #{{id}}</span>
+                <li class="pack-history__item">
+                    <a class="pack-history__link" href="">
+                        <time class="pack-history__time"></time>
+                        <span class="pack-history__title"></span>
                     </a>
-                    <ul class="pack-history__cards" role="list">
-                        <li class="pack-history__card">
-                            <span class="rarity-chip rarity-chip--level-{{level}}">{{code}}</span>
-                            <span class="pack-history__card-name">{{name}}</span>{{#isNew}} <span class="pack-history__new" aria-label="New card">NEW</span>{{/isNew}}
-                        </li>
-                    </ul>
+                    <ul class="pack-history__cards" role="list"></ul>
                 </li>
             </template>
         </div>

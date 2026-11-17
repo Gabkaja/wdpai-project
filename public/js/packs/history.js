@@ -55,6 +55,7 @@ function renderOpening(opening) {
     title.textContent = `Opening #${opening.id}`;
 
     const cardsList = clone.querySelector('.pack-history__cards');
+    cardsList.replaceChildren();
     for (const entry of opening.cards) {
         const card = entry.card;
         const li = document.createElement('li');

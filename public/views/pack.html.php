@@ -9,9 +9,9 @@
 
         <section class="pack-header" aria-labelledby="pack-title">
             <div class="pack-header__inner container">
-                <a href="/profile" class="button button--primary pack-header__back">
+                <a href="/packs" class="button button--primary pack-header__back">
                     <span class="icon" aria-hidden="true">arrow_back</span>
-                    Back to profile
+                    Back to packs
                 </a>
                 <h1 class="pack-header__title" id="pack-title">Pack opened</h1>
                 <div class="pack-header__meta">

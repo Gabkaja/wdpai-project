@@ -116,4 +116,10 @@ if (form) {
     });
 
     form.addEventListener('change', debouncedSave);
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        clearTimeout(pending);
+        save();
+    });
 }
