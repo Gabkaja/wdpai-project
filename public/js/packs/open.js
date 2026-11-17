@@ -58,7 +58,9 @@ if (openForm && messageEl) {
         open(count);
     });
 
-    openAllBtn.addEventListener('click', () => {
-        open(Math.min(config.stock, config.maxBulk));
-    });
+    if (openAllBtn) {
+        openAllBtn.addEventListener('click', () => {
+            open(Math.max(1, Math.min(config.stock, config.maxBulk)));
+        });
+    }
 }

@@ -42,7 +42,7 @@ final class PackRepository
 
             $settings = $this->loadSettings();
 
-            if ($quantity < 1 || $quantity > $settings['max_bulk_packs']) {
+            if ($quantity < 1 || $quantity > $settings['max_purchase_packs']) {
                 throw new \DomainException('invalid_quantity');
             }
 
@@ -305,7 +305,7 @@ final class PackRepository
 
     private function loadSettings(): array
     {
-        $statement = $this->pdo->query('SELECT cards_per_pack, cost_points, max_bulk_packs FROM pack_settings WHERE id = 1');
+        $statement = $this->pdo->query('SELECT cards_per_pack, cost_points, max_bulk_packs, max_purchase_packs FROM pack_settings WHERE id = 1');
         $row = $statement->fetch();
 
         if ($row === false) {
@@ -316,6 +316,7 @@ final class PackRepository
             'cards_per_pack' => (int) $row['cards_per_pack'],
             'cost_points' => (int) $row['cost_points'],
             'max_bulk_packs' => (int) $row['max_bulk_packs'],
+            'max_purchase_packs' => (int) $row['max_purchase_packs'],
         ];
     }
 

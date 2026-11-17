@@ -23,14 +23,6 @@ if (rarityJson) {
     } catch (error) {}
 }
 
-let cardsPerPack = 4;
-if (root) {
-    const v = parseInt(root.dataset.cardsPerPack, 10);
-    if (Number.isInteger(v)) {
-        cardsPerPack = v;
-    }
-}
-
 let reducedMotion = false;
 const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -68,6 +60,10 @@ function cleanup() {
     removeListeners();
     mq.removeEventListener('change', onReducedMotionChange);
 }
+
+window.addEventListener('pagehide', () => {
+    cleanup();
+});
 
 function onReducedMotionChange() {
     reducedMotion = mq.matches;
@@ -116,7 +112,8 @@ function createCard(openingIndex, cardIndex, entry) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `pack-card pack-card--level-${level}`;
-    btn.setAttribute('aria-label', `Reveal card ${cardIndex + 1} of ${cardsPerPack}`);
+    const total = openings[openingIndex].cards.length;
+    btn.setAttribute('aria-label', `Reveal card ${cardIndex + 1} of ${total}`);
     btn.dataset.opening = String(openingIndex);
     btn.dataset.card = String(cardIndex);
     btn.dataset.revealed = 'false';
@@ -131,7 +128,8 @@ function createCard(openingIndex, cardIndex, entry) {
     front.className = 'pack-card__face pack-card__face--front';
 
     const icon = document.createElement('span');
-    icon.className = 'pack-card__icon';
+    icon.className = 'pack-card__icon icon';
+    icon.setAttribute('aria-hidden', 'true');
     icon.textContent = card.icon;
 
     const title = document.createElement('h3');
@@ -177,7 +175,8 @@ function announceCard(btn) {
     const cardIndex = parseInt(btn.dataset.card, 10);
     const entry = openings[openingIndex].cards[cardIndex];
     const card = entry.card;
-    const text = `Card ${cardIndex + 1} of ${cardsPerPack}: ${card.name}, ${card.rarity_name}` + (entry.is_new ? ', new' : '');
+    const total = openings[openingIndex].cards.length;
+    const text = `Card ${cardIndex + 1} of ${total}: ${card.name}, ${card.rarity_name}` + (entry.is_new ? ', new' : '');
     announce(text);
     if (live) {
         live.textContent = text;
@@ -185,6 +184,9 @@ function announceCard(btn) {
 }
 
 function flipCard(btn, silent) {
+    if (btn.dataset.revealed === 'true') {
+        return;
+    }
     revealCardUI(btn);
     if (!silent) {
         announceCard(btn);
@@ -403,7 +405,7 @@ function showSummary() {
         panel.appendChild(bestLine);
     }
 
-    play('summary', { level: best ? best.level : 0 });
+    play('summary', { bestLevel: best ? best.level : 0 });
 
     const buttons = document.createElement('div');
     buttons.className = 'packs__summary-buttons';
@@ -462,7 +464,6 @@ export function show(openingsIn, settingsIn) {
 
     if (queue) {
         buildPack(0, wrapper);
-        wireQueuePack(packStates[0], wrapper);
     } else {
         const grid = document.createElement('div');
         grid.className = 'packs__packs-grid';
@@ -470,7 +471,6 @@ export function show(openingsIn, settingsIn) {
             buildPack(i, grid);
         }
         wrapper.appendChild(grid);
-        wireAllPacks(auto);
     }
 
     reveal.appendChild(wrapper);
@@ -484,6 +484,12 @@ export function show(openingsIn, settingsIn) {
 
     if (closeBtn) {
         trackListener(closeBtn, 'click', close);
+    }
+
+    if (queue) {
+        wireQueuePack(packStates[0], wrapper);
+    } else {
+        wireAllPacks(auto, wrapper);
     }
 }
 
@@ -517,7 +523,12 @@ function wireQueuePack(state, wrapper) {
         tearSeal(state.seal, () => {
             state.cardsWrap.hidden = false;
             if (auto) {
-                autoFlip(state.cardBtns, 0, () => onPackDone());
+                if (reducedMotion) {
+                    flipAllRemaining(state.cardBtns, 0);
+                    onPackDone();
+                } else {
+                    autoFlip(state.cardBtns, 0, () => onPackDone());
+                }
             } else {
                 focusFirstAction();
             }
@@ -540,8 +551,11 @@ function wireQueuePack(state, wrapper) {
     trackListener(skipBtn, 'click', () => {
         skipRequested = true;
         clearTimers();
+        state.torn = true;
+        state.seal.hidden = true;
+        state.cardsWrap.hidden = false;
         flipAllRemaining(state.cardBtns, 0);
-        const t = setTimeout(() => onPackDone(), 100);
+        const t = setTimeout(() => onPackDone(), reducedMotion ? 0 : 100);
         trackTimer(t);
     });
 
@@ -570,6 +584,7 @@ function wireQueuePack(state, wrapper) {
     }
 
     trackListener(nextBtn, 'click', () => {
+        skipRequested = false;
         packIndex++;
         if (packIndex >= openings.length) {
             showSummary();
@@ -597,8 +612,17 @@ function wireQueuePack(state, wrapper) {
     focusFirstAction();
 }
 
-function wireAllPacks(auto) {
+function wireAllPacks(auto, wrapper) {
     let active = 0;
+
+    const controls = document.createElement('div');
+    controls.className = 'packs__controls';
+    const skipBtn = document.createElement('button');
+    skipBtn.type = 'button';
+    skipBtn.className = 'button button--secondary packs__skip';
+    skipBtn.textContent = auto ? 'Skip animation' : 'Reveal all';
+    controls.appendChild(skipBtn);
+    wrapper.appendChild(controls);
 
     function tearNext() {
         while (active < openings.length && packStates[active] && packStates[active].torn) {
@@ -615,33 +639,41 @@ function wireAllPacks(auto) {
         tearSeal(state.seal, () => {
             state.cardsWrap.hidden = false;
             if (auto) {
-                autoFlip(state.cardBtns, 0, () => {
+                if (reducedMotion) {
+                    flipAllRemaining(state.cardBtns, 0);
                     active++;
                     tearNext();
-                });
+                } else {
+                    autoFlip(state.cardBtns, 0, () => {
+                        active++;
+                        tearNext();
+                    });
+                }
             }
         });
     }
 
-    const skipBtn = document.querySelector('.packs__skip');
-    if (skipBtn) {
-        trackListener(skipBtn, 'click', () => {
-            skipRequested = true;
-            clearTimers();
-            for (const state of packStates) {
-                if (!state) {
-                    continue;
-                }
-                flipAllRemaining(state.cardBtns, 0);
+    trackListener(skipBtn, 'click', () => {
+        skipRequested = true;
+        clearTimers();
+        const allBtns = [];
+        for (const state of packStates) {
+            if (!state) {
+                continue;
             }
-            const t = setTimeout(() => {
-                if (allComplete()) {
-                    showSummary();
-                }
-            }, 100);
-            trackTimer(t);
-        });
-    }
+            state.torn = true;
+            state.seal.hidden = true;
+            state.cardsWrap.hidden = false;
+            allBtns.push(...state.cardBtns);
+        }
+        flipAllRemaining(allBtns, 0);
+        const t = setTimeout(() => {
+            if (allComplete()) {
+                showSummary();
+            }
+        }, reducedMotion ? 0 : 100);
+        trackTimer(t);
+    });
 
     if (auto) {
         tearNext();

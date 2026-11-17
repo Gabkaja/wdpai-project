@@ -13,3 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     configure(settings);
 });
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});

@@ -1,6 +1,7 @@
 <main class="packs" data-packs-root
     data-cost="<?= (int) $packSettings['cost_points'] ?>"
     data-max-bulk="<?= (int) $packSettings['max_bulk_packs'] ?>"
+    data-max-purchase="<?= (int) $packSettings['max_purchase_packs'] ?>"
     data-cards-per-pack="<?= (int) $packSettings['cards_per_pack'] ?>"
     data-points="<?= (int) $points ?>"
     data-stock="<?= (int) $unopenedPacks ?>"
@@ -68,9 +69,15 @@
                 </div>
 
                 <form class="packs__form" data-form="buy" method="post" action="/api/packs/buy">
-                    <div class="packs__field">
-                        <label class="packs__label" for="packs-buy-quantity">Quantity</label>
-                        <input class="packs__input" id="packs-buy-quantity" name="quantity" type="number" min="1" max="<?= (int) $packSettings['max_bulk_packs'] ?>" value="1">
+                    <div class="packs__field packs__field--slider">
+                        <div class="packs__field-head">
+                            <label class="packs__label" for="packs-buy-quantity">Quantity</label>
+                            <output class="packs__slider-value" for="packs-buy-quantity" data-output="buy-quantity">1</output>
+                        </div>
+                        <div class="packs__slider">
+                            <input class="packs__range-input" id="packs-buy-quantity" name="quantity" type="range" min="1" max="<?= (int) $packSettings['max_purchase_packs'] ?>" step="1" value="1" data-slider="buy-quantity">
+                            <div class="packs__slider-ticks" data-ticks="buy-quantity" aria-hidden="true"></div>
+                        </div>
                         <span class="packs__unit">packs</span>
                     </div>
                     <div class="packs__field packs__field--total">
@@ -95,9 +102,15 @@
                 </div>
 
                 <form class="packs__form" data-form="open" method="post" action="/api/packs/open">
-                    <div class="packs__field">
-                        <label class="packs__label" for="packs-open-count">Count</label>
-                        <input class="packs__input" id="packs-open-count" name="count" type="number" min="1" max="<?= (int) min($unopenedPacks, $packSettings['max_bulk_packs']) ?>" value="1"<?= $unopenedPacks <= 0 ? ' disabled' : '' ?>>
+                    <div class="packs__field packs__field--slider">
+                        <div class="packs__field-head">
+                            <label class="packs__label" for="packs-open-count">Count</label>
+                            <output class="packs__slider-value" for="packs-open-count" data-output="open-count">1</output>
+                        </div>
+                        <div class="packs__slider">
+                            <input class="packs__range-input" id="packs-open-count" name="count" type="range" min="1" max="<?= (int) max(1, min($unopenedPacks, $packSettings['max_bulk_packs'])) ?>" step="1" value="1" data-slider="open-count"<?= $unopenedPacks <= 0 ? ' disabled' : '' ?>>
+                            <div class="packs__slider-ticks" data-ticks="open-count" aria-hidden="true"></div>
+                        </div>
                         <span class="packs__unit">packs</span>
                     </div>
                     <button class="button button--primary packs__submit" type="submit"<?= $unopenedPacks <= 0 ? ' disabled' : '' ?>>Open</button>

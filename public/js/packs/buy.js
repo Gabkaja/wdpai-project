@@ -15,7 +15,7 @@ if (form && messageEl && quantityInput) {
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const max = Math.min(parseInt(quantityInput.max, 10) || 1, config.maxBulk);
+        const max = Math.max(1, Math.min(parseInt(quantityInput.max, 10) || config.maxPurchase, config.maxPurchase));
         const quantity = parseInt(quantityInput.value, 10);
 
         if (!Number.isInteger(quantity) || quantity < 1 || quantity > max) {
