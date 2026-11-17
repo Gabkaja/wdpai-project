@@ -29,6 +29,7 @@
         <meta name="csrf-token" content="<?= htmlspecialchars(\App\Session::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <script src="/js/theme.js" defer></script>
+    <script type="module" src="/js/ui/index.js"></script>
 </head>
 <body>
     <?php $this->partial('header', ['currentUser' => $currentUser ?? null]); ?>

@@ -130,6 +130,19 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 - Punkty i magazyn paczek zmienia się wyłącznie w repozytoriach, nigdy na podstawie wartości z żądania.
 - Wynik otwarcia (`GET /packs/{id}`) widzi tylko właściciel; cudzy lub nieistniejący wpis = 404.
 
+## Settings
+
+- Settings routes live under `/settings/{account,packs,privacy,performance}`; `/settings` redirects to `/settings/account`.
+- All settings pages are handled by `App\Controller\SettingsController` (final, extends `AppController`), require a logged-in user (reuse `AppController::requireLogin()`), and render inside a shared settings layout with a side navigation.
+- Routes are registered only in `public/index.php`.
+- The user menu (avatar or initial + dropdown: Profile, Settings, Admin for admins, Logout) is a single partial included by the main layout; logout stays a POST with CSRF token.
+- Avatar files live in `public/uploads/avatars/{user_id}.webp`, column `users.avatar_path` is nullable; no avatar means a circle with the user's initial.
+- Per-user preferences live in `user_settings`; new columns only via new migration files `database/NN-*.sql` with the next free number.
+- Lite mode: `user_settings.lite_mode`; when enabled `<html>` gets class `is-lite`, which disables box-shadow glows, backdrop-filter, animations and transitions; pack opening skips animations and lists use page size 12 instead of 24.
+- Collection visibility: `user_settings.collection_visibility` (`public` | `private`, default `public`); private hides the card list on `/users/{id}`, leaderboard stays public, admins see everything.
+- Password change requires the current password, new password min 8 chars and different from the old one, calls `session_regenerate_id(true)`, writes to `system_logs` without any password in the context, and does not log out other devices.
+- Avatar upload: JPG/PNG/WebP, max 2 MB, validated by MIME via `finfo`, cropped to a 256x256 square, saved as WebP (requires the `gd` extension in the php Dockerfile).
+
 ## JSON API
 
 - Trasy `/api/...` rejestruje się w `public/index.php`; kontrolery `*ApiController` dziedziczą po `AppController` i odpowiadają wyłącznie JSON przez `AppController::json()`. Bez przekierowań i HTML. Każda odpowiedź ma `Cache-Control: no-store`.
