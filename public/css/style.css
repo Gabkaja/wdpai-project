@@ -697,6 +697,126 @@ main {
   }
 }
 
+/* 4d. Settings
+   -------------------------------------------------------------------------- */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.settings__sidebar {
+  display: none;
+}
+
+.settings__nav {
+  display: none;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-low);
+  box-shadow: var(--shadow-card);
+}
+
+.settings__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.settings__item {
+  margin: 0;
+}
+
+.settings__link {
+  display: block;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  text-decoration: none;
+  white-space: nowrap;
+  border: var(--border-width) solid transparent;
+  transition:
+    color var(--transition),
+    background-color var(--transition),
+    border-color var(--transition);
+}
+
+.settings__link:hover,
+.settings__link:focus-visible {
+  color: var(--color-brand);
+  background: var(--color-surface-high);
+}
+
+.settings__link--active {
+  color: var(--color-brand);
+  background: var(--color-surface-container);
+  border-color: var(--color-border);
+}
+
+.settings__content {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-low);
+  box-shadow: var(--shadow-card);
+}
+
+.settings__title {
+  margin: 0 0 var(--space-sm) 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--line-heading);
+  color: var(--color-text);
+}
+
+.settings__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  line-height: var(--line-body);
+}
+
+@media (min-width: 45rem) {
+  .settings {
+    flex-direction: row;
+  }
+
+  .settings__sidebar {
+    display: block;
+    flex: 0 0 18rem;
+  }
+
+  .settings__nav {
+    display: block;
+    position: sticky;
+    top: var(--space-lg);
+  }
+
+  .settings__list {
+    flex-direction: column;
+    overflow-x: visible;
+    gap: var(--space-2xs);
+  }
+
+  .settings__link {
+    white-space: normal;
+  }
+
+  .settings__content {
+    flex: 1;
+  }
+}
+
 /* 5. Buttons
    -------------------------------------------------------------------------- */
 .button {

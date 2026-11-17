@@ -146,6 +146,11 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 | POST | `/logout` | logged in | `SecurityController::logout` |
 | GET | `/packs` | logged in | `PackController::index` |
 | GET | `/packs/{id}` | logged in (owner only) | `PackController::show` |
+| GET | `/settings` | logged in | `SettingsController::index` (redirects to `/settings/account`) |
+| GET | `/settings/account` | logged in | `SettingsController::account` |
+| GET | `/settings/packs` | logged in | `SettingsController::packs` |
+| GET | `/settings/privacy` | logged in | `SettingsController::privacy` |
+| GET | `/settings/performance` | logged in | `SettingsController::performance` |
 | GET | `/auth/kick/login` | public | `KickController::login` |
 | GET | `/auth/kick/callback` | public | `KickController::callback` |
 | GET | `/profile/kick/connect` | logged in | `KickController::connect` |
