@@ -706,11 +706,11 @@ main {
 }
 
 .settings__sidebar {
-  display: none;
+  display: block;
 }
 
 .settings__nav {
-  display: none;
+  display: block;
   padding: var(--space-md);
   border-radius: var(--radius-md);
   background: var(--color-surface-low);
@@ -784,6 +784,88 @@ main {
   color: var(--color-text-muted);
   font-size: var(--fs-md);
   line-height: var(--line-body);
+}
+
+.settings-form .packs__field {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-xs);
+}
+
+.settings-form .packs__label {
+  margin: 0;
+}
+
+.settings-form .packs__field-description {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--line-normal);
+}
+
+.settings-form .packs__radios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: var(--space-sm);
+}
+
+.settings-form .packs__radio {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: var(--space-sm);
+  row-gap: var(--space-3xs);
+  align-items: start;
+  padding: var(--space-sm) var(--space-md);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container);
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition);
+}
+
+.settings-form .packs__radio:hover {
+  background: var(--color-surface-high);
+}
+
+.settings-form .packs__radio:has(input:checked) {
+  border-color: var(--color-brand);
+  background: var(--color-surface-high);
+}
+
+.settings-form .packs__radio:has(input:focus-visible) {
+  border-color: var(--color-brand);
+}
+
+.settings-form .packs__radio input {
+  grid-row: 1 / span 2;
+  align-self: center;
+  margin: 0;
+}
+
+.settings-form .packs__radio-title {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: var(--line-snug);
+}
+
+.settings-form .packs__radio-desc {
+  grid-column: 2;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--line-normal);
+}
+
+.settings-form .packs__switch {
+  align-self: flex-start;
+}
+
+.settings-form .packs__range {
+  width: 100%;
 }
 
 @media (min-width: 45rem) {
