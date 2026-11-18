@@ -7,45 +7,39 @@ namespace App\Controller;
 use App\Database;
 use App\Repository\CollectionRepository;
 use App\Repository\KickAccountRepository;
-use App\Repository\LogRepository;
-use App\Repository\PackRepository;
+use App\Repository\LeaderboardRepository;
 
 final class ProfileController extends AppController
 {
     public function index(): void
     {
         $user = $this->requireLogin();
+        $this->noCache();
 
         $pdo = (new Database())->connect();
         $collectionRepository = new CollectionRepository($pdo);
         $kickAccount = (new KickAccountRepository($pdo))->findByUserId($user->getId());
         $collection = $collectionRepository->forUser($user->getId());
+        $entry = (new LeaderboardRepository($pdo))->findByUserId($user->getId());
 
         $totalCards = 0;
-        $uniqueCards = count($collection);
 
         foreach ($collection as $item) {
             $totalCards += $item->getQuantity();
         }
 
-        $packsOpened = (new PackRepository($pdo, new LogRepository($pdo)))->countByUser($user->getId());
-
         $this->render('profile', [
             'pageTitle' => 'My profile – StreamRip',
             'username' => $user->getUsername(),
-            'email' => $user->getEmail(),
+            'role' => $user->getRole(),
             'points' => $user->getPoints(),
-            'memberSince' => $user->getCreatedAt()->format('F Y'),
-            'stats' => [
-                'userId' => $user->getId(),
-                'totalCards' => $totalCards,
-                'uniqueCards' => $uniqueCards,
-                'packsOpened' => $packsOpened,
-                'completion' => $uniqueCards > 0 ? (int) round($uniqueCards / 8 * 100) : 0,
-                'rank' => 12,
-                'favoriteCard' => 'System Annihilator',
-            ],
             'unopenedPacks' => $user->getUnopenedPacks(),
+            'joinedAt' => $entry?->getJoinedAt() ?? $user->getCreatedAt(),
+            'rank' => $entry?->getRankPosition() ?? 0,
+            'totalCards' => $entry?->getTotalCards() ?? $totalCards,
+            'uniqueCards' => $entry?->getUniqueCards() ?? count($collection),
+            'packsOpened' => $entry?->getPacksOpened() ?? 0,
+            'rarestCard' => $entry?->getRarestCardName(),
             'collection' => $collection,
             'kickAccount' => $kickAccount,
         ]);

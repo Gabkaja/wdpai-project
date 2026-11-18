@@ -6,109 +6,62 @@
                 <p class="auth-alert__text"><?= htmlspecialchars($flash['message'], ENT_QUOTES, 'UTF-8') ?></p>
             </div>
         <?php endif; ?>
-        <section class="profile-hero" aria-labelledby="profile-title">
-            <div class="profile-hero__inner">
-                <div class="profile-hero__identity">
-                    <span class="profile-hero__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($username, 0, 1))) ?></span>
-                    <div>
-                        <h1 class="profile-hero__name" id="profile-title">Profile of <?= htmlspecialchars($username) ?></h1>
-                        <ul class="profile-hero__meta" role="list">
-                            <li><span class="icon" aria-hidden="true">calendar_month</span> Collector since: <?= htmlspecialchars($memberSince) ?></li>
-                        </ul>
-                    </div>
+
+        <section class="player-card" aria-labelledby="player-title">
+            <header class="player-card__header">
+                <span class="player-card__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($username, 0, 1))) ?></span>
+                <div class="player-card__identity">
+                    <h1 class="player-card__name" id="player-title"><?= htmlspecialchars($username) ?></h1>
+                    <span class="player-card__role"><?= htmlspecialchars(ucfirst($role)) ?></span>
+                    <p class="player-card__joined">Joined <?= htmlspecialchars($joinedAt->format('F j, Y')) ?></p>
                 </div>
+            </header>
 
-                <div class="profile-hero__valuation">
-                    <span class="profile-hero__valuation-label">Points balance</span>
-                    <span class="profile-hero__valuation-value"><?= (int) $points ?></span>
-                    <span class="profile-hero__valuation-delta">
-                        <span class="icon" aria-hidden="true">trending_up</span>
-                        StreamRip points
-                    </span>
+            <dl class="player-card__stats">
+                <div class="player-card__stat player-card__stat--rank">
+                    <dt>Rank</dt>
+                    <dd>#<?= (int) $rank ?></dd>
                 </div>
-            </div>
-        </section>
+                <div class="player-card__stat">
+                    <dt>Points</dt>
+                    <dd><?= (int) $points ?></dd>
+                </div>
+                <div class="player-card__stat">
+                    <dt>Unopened packs</dt>
+                    <dd><?= (int) $unopenedPacks ?></dd>
+                </div>
+                <div class="player-card__stat">
+                    <dt>Total cards</dt>
+                    <dd><?= (int) $totalCards ?></dd>
+                </div>
+                <div class="player-card__stat">
+                    <dt>Unique cards</dt>
+                    <dd><?= (int) $uniqueCards ?></dd>
+                </div>
+                <div class="player-card__stat">
+                    <dt>Packs opened</dt>
+                    <dd><?= (int) $packsOpened ?></dd>
+                </div>
+                <div class="player-card__stat player-card__stat--rarest">
+                    <dt>Rarest card</dt>
+                    <dd><?= $rarestCard !== null && $rarestCard !== '' ? htmlspecialchars($rarestCard) : '&mdash;' ?></dd>
+                </div>
+            </dl>
 
-        <?php
-        $totalCards = $stats['totalCards'] ?? 0;
-        $uniqueCards = $stats['uniqueCards'] ?? 0;
-        $packsOpened = $stats['packsOpened'] ?? 0;
-        $completion = $stats['completion'] ?? 0;
-        ?>
-
-        <section class="profile-stats" aria-labelledby="stats-heading">
-            <div class="profile-stats__head">
-                <h2 class="profile-stats__title" id="stats-heading">
-                    <span class="icon" aria-hidden="true">query_stats</span>
-                    Player statistics
-                </h2>
-                <span class="profile-stats__eyebrow">Overview</span>
-            </div>
-
-            <div class="profile-stats__grid">
-                <article class="stat-card stat-card--collection">
-                    <div class="stat-card__head">
-                        <span>Collection</span>
-                        <span class="icon" aria-hidden="true">inventory_2</span>
-                    </div>
-                    <p class="stat-card__value">Cards collected: <strong><?= (int) $totalCards ?></strong></p>
-                    <div class="progress">
-                        <span class="progress__track">
-                            <span class="progress__bar" style="width: <?= (int) $completion ?>%"></span>
-                        </span>
-                    </div>
-                </article>
-
-                <article class="stat-card stat-card--completion">
-                    <div class="stat-card__head">
-                        <span>Completion</span>
-                        <span class="icon" aria-hidden="true">donut_large</span>
-                    </div>
-                    <p class="stat-card__value">Collection completion: <?= (int) $completion ?>%</p>
-                    <div class="progress">
-                        <span class="progress__track">
-                            <span class="progress__bar" style="width: <?= (int) $completion ?>%"></span>
-                        </span>
-                    </div>
-                </article>
-
-                <article class="stat-card stat-card--standing">
-                    <div class="stat-card__head">
-                        <span>Packs opened</span>
-                        <span class="icon" aria-hidden="true">playing_cards</span>
-                    </div>
-                    <p class="stat-card__value"><?= (int) $packsOpened ?></p>
-                    <p class="stat-card__note">Total pack openings</p>
-                </article>
+            <div class="player-card__actions">
+                <a class="button button--primary" href="/packs">
+                    <span class="icon" aria-hidden="true">playing_cards</span>
+                    Open packs
+                </a>
+                <a class="button button--secondary" href="/settings/account">
+                    <span class="icon" aria-hidden="true">settings</span>
+                    Settings
+                </a>
             </div>
         </section>
 
         <div class="profile-layout">
             <div class="profile-sidebar">
-                <section class="profile-panel" aria-labelledby="packs-heading">
-                    <div class="profile-panel__head">
-                        <h2 class="profile-panel__title" id="packs-heading">
-                            <span class="icon" aria-hidden="true">playing_cards</span>
-                            Packs
-                        </h2>
-                    </div>
-
-                    <ul class="profile-packs" role="list">
-                        <li class="profile-packs__item">
-                            <span class="profile-packs__label">Points</span>
-                            <span class="profile-packs__value"><?= (int) $points ?></span>
-                        </li>
-                        <li class="profile-packs__item">
-                            <span class="profile-packs__label">Unopened packs</span>
-                            <span class="profile-packs__value"><?= (int) $unopenedPacks ?></span>
-                        </li>
-                    </ul>
-
-                    <p class="profile-packs__hint">
-                        <a class="button button--primary" href="/packs">Open packs</a>
-                    </p>
-                </section>
-
                 <section class="profile-panel" aria-labelledby="avatar-heading">
                     <div class="profile-panel__head">
                         <h2 class="profile-panel__title" id="avatar-heading">
@@ -164,7 +117,11 @@
                                 <span class="icon" aria-hidden="true">verified</span>
                                 Kick account
                             </h2>
-                        </div></section>
+                        </div>
+                        <p class="profile-panel__text">
+                            Connected as <strong><?= htmlspecialchars($kickAccount['kick_username']) ?></strong>.
+                        </p>
+                    </section>
                 <?php else: ?>
                     <section class="profile-panel" aria-labelledby="kick-heading">
                         <div class="profile-panel__head">
