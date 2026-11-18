@@ -786,6 +786,41 @@ main {
   line-height: var(--line-body);
 }
 
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.settings-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--line-heading);
+  color: var(--color-text);
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.settings-form input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.packs__message--error {
+  color: var(--color-error);
+}
+
+.packs__message--success {
+  color: var(--color-brand);
+}
+
 .settings-form .packs__field {
   flex-direction: column;
   align-items: stretch;

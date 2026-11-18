@@ -14,6 +14,7 @@ use App\Controller\OverlayController;
 use App\Controller\KickController;
 use App\Controller\PackController;
 use App\Controller\PackApiController;
+use App\Controller\AccountApiController;
 use App\Controller\SettingsController;
 use App\Controller\CollectionApiController;
 use App\Repository\LogRepository;
@@ -65,6 +66,7 @@ $routing->post('/api/packs/buy', PackApiController::class, 'buy');
 $routing->post('/api/packs/open', PackApiController::class, 'open');
 $routing->post('/api/settings/packs', PackApiController::class, 'saveSettings');
 $routing->get('/api/settings/packs', PackApiController::class, 'getSettings');
+$routing->post('/api/settings/password', AccountApiController::class, 'changePassword');
 $routing->get('/api/packs/history', PackApiController::class, 'history');
 $routing->get('/api/collection', CollectionApiController::class, 'collection');
 

@@ -108,6 +108,21 @@ final class UserRepository
         ];
     }
 
+    public function findPasswordHashById(int $id): ?string
+    {
+        $statement = $this->pdo->prepare('SELECT password_hash FROM users WHERE id = :id');
+
+        $statement->execute([':id' => $id]);
+
+        $row = $statement->fetch();
+
+        if ($row === false) {
+            return null;
+        }
+
+        return $row['password_hash'];
+    }
+
     public function updatePasswordHash(int $id, string $passwordHash): void
     {
         $statement = $this->pdo->prepare('UPDATE users SET password_hash = :password_hash WHERE id = :id');
