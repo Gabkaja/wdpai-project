@@ -1,11 +1,12 @@
 import { api } from '../api.js';
 import { messageFor } from './messages.js';
-import { setBusy, showMessage, announce } from './ui.js';
+import { showMessage, announce } from './ui.js';
 
-const list = document.querySelector('ol[data-history-list]');
-const loadMore = document.querySelector('button[data-action="load-more"]');
-const template = document.querySelector('template[data-template="history-item"]');
-const messageEl = document.querySelector('[data-message="history"]');
+const section = document.querySelector('#history-details');
+const list = section ? section.querySelector('ol[data-history-list]') : null;
+const loadMore = section ? section.querySelector('button[data-action="load-more"]') : null;
+const template = section ? section.querySelector('template[data-template="history-item"]') : null;
+const messageEl = section ? section.querySelector('[data-message="history"]') : null;
 
 const rarityLevels = {};
 const rarityJson = document.querySelector('script[data-rarities]');
@@ -19,23 +20,53 @@ if (rarityJson) {
 
 const displayedIds = new Set();
 
+function buildItems(openings) {
+    const nodes = [];
+    let added = 0;
+
+    for (const opening of openings) {
+        const id = String(opening.id);
+        if (displayedIds.has(id)) {
+            continue;
+        }
+        displayedIds.add(id);
+        nodes.push(renderOpening(opening));
+        added++;
+    }
+
+    return { nodes, added };
+}
+
 export function prependOpenings(openings) {
     if (!list) {
         return 0;
     }
-    let added = 0;
-    for (const opening of openings) {
-        if (displayedIds.has(opening.id)) {
-            continue;
-        }
-        displayedIds.add(opening.id);
-        list.append(renderOpening(opening));
-        added++;
+
+    const { nodes, added } = buildItems(openings);
+    if (added === 0) {
+        return 0;
     }
+
+    list.prepend(...nodes.reverse());
+
     if (loadMore) {
         const offset = parseInt(loadMore.dataset.nextOffset, 10) || 0;
         loadMore.dataset.nextOffset = String(offset + added);
     }
+
+    return added;
+}
+
+function appendOpenings(openings) {
+    if (!list) {
+        return 0;
+    }
+
+    const { nodes, added } = buildItems(openings);
+    if (added > 0) {
+        list.append(...nodes);
+    }
+
     return added;
 }
 
@@ -86,7 +117,7 @@ function renderOpening(opening) {
 }
 
 if (list && loadMore && template) {
-    document.querySelectorAll('li[data-opening-id]').forEach((item) => {
+    list.querySelectorAll('li[data-opening-id]').forEach((item) => {
         if (item.dataset.openingId) {
             displayedIds.add(item.dataset.openingId);
         }
@@ -114,7 +145,7 @@ if (list && loadMore && template) {
 
         try {
             const data = await api.get(`/api/packs/history?offset=${offset}&limit=10`);
-            prependOpenings(data.items);
+            appendOpenings(data.items);
             loadMore.dataset.nextOffset = String(data.next_offset);
             if (data.has_more === false) {
                 loadMore.hidden = true;
