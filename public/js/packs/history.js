@@ -29,7 +29,7 @@ export function prependOpenings(openings) {
             continue;
         }
         displayedIds.add(opening.id);
-        list.prepend(renderOpening(opening));
+        list.append(renderOpening(opening));
         added++;
     }
     if (loadMore) {
