@@ -1,18 +1,17 @@
 import './state.js';
 import './buy.js';
 import './open.js';
-import './settings.js';
 import './history.js';
 import './collection.js';
 import { configure } from '../sound.js';
-import { settings } from './settings.js';
+import { loadSettings, settings } from '../settings/pack-settings.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.querySelector('[data-packs-root]')) {
         return;
     }
 
-    configure(settings);
+    loadSettings().then(() => configure(settings));
 });
 
 window.addEventListener('pageshow', (event) => {

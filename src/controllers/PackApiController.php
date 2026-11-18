@@ -150,6 +150,24 @@ final class PackApiController extends AppController
         ]);
     }
 
+    public function getSettings(): void
+    {
+        $user = $this->requireLoginJson();
+
+        $pdo = (new Database())->connect();
+        $settings = (new UserSettingsRepository($pdo))->find($user->getId());
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => [
+                'reveal_mode' => $settings->getRevealMode(),
+                'multi_open_mode' => $settings->getMultiOpenMode(),
+                'sound_enabled' => $settings->isSoundEnabled(),
+                'sound_volume' => $settings->getSoundVolume(),
+            ],
+        ]);
+    }
+
     public function history(): void
     {
         $user = $this->requireLoginJson();
