@@ -794,12 +794,13 @@ main {
 
 .settings-form .packs__label {
   margin: 0;
+  font-size: var(--fs-lg);
 }
 
 .settings-form .packs__field-description {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   line-height: var(--line-normal);
 }
 
@@ -848,7 +849,7 @@ main {
 .settings-form .packs__radio-title {
   color: var(--color-text);
   font-family: var(--font-display);
-  font-size: var(--fs-md);
+  font-size: var(--fs-lg);
   font-weight: 600;
   line-height: var(--line-snug);
 }
@@ -856,7 +857,7 @@ main {
 .settings-form .packs__radio-desc {
   grid-column: 2;
   color: var(--color-text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   line-height: var(--line-normal);
 }
 
