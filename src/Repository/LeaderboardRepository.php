@@ -30,6 +30,20 @@ final class LeaderboardRepository
         return $entries;
     }
 
+    public function findByUserId(int $userId): ?LeaderboardEntry
+    {
+        $statement = $this->pdo->prepare('SELECT user_id, username, total_cards, unique_cards, rank_position, joined_at, rarest_card_name, packs_opened FROM leaderboard_view WHERE user_id = :user_id');
+        $statement->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $statement->execute();
+        $row = $statement->fetch();
+
+        if ($row === false) {
+            return null;
+        }
+
+        return $this->mapRowToLeaderboardEntry($row);
+    }
+
     private function mapRowToLeaderboardEntry(array $row): LeaderboardEntry
     {
         return new LeaderboardEntry(

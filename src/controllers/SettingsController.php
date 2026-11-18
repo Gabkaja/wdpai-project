@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Database;
+use App\Repository\UserSettingsRepository;
+
 final class SettingsController extends AppController
 {
     public function index(): void
@@ -23,10 +26,14 @@ final class SettingsController extends AppController
 
     public function packs(): void
     {
-        $this->requireLogin();
+        $user = $this->requireLogin();
+        $pdo = (new Database())->connect();
+        $userSettings = (new UserSettingsRepository($pdo))->find($user->getId());
+
         $this->render('settings/packs', [
             'pageTitle' => 'Pack settings – StreamRip',
             'section' => 'packs',
+            'userSettings' => $userSettings,
         ]);
     }
 

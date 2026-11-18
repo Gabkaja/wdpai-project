@@ -2,7 +2,7 @@ import { api } from '../api.js';
 import { updateStock, config } from './state.js';
 import { prependOpenings } from './history.js';
 import { show as stageShow } from './stage.js';
-import { settings } from './settings.js';
+import { settings } from '../settings/pack-settings.js';
 import { messageFor } from './messages.js';
 import { setBusy, showMessage, announce } from './ui.js';
 

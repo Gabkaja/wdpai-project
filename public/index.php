@@ -15,6 +15,7 @@ use App\Controller\KickController;
 use App\Controller\PackController;
 use App\Controller\PackApiController;
 use App\Controller\SettingsController;
+use App\Controller\CollectionApiController;
 use App\Repository\LogRepository;
 use App\Session;
 
@@ -63,7 +64,9 @@ $routing->get('/settings/performance', SettingsController::class, 'performance')
 $routing->post('/api/packs/buy', PackApiController::class, 'buy');
 $routing->post('/api/packs/open', PackApiController::class, 'open');
 $routing->post('/api/settings/packs', PackApiController::class, 'saveSettings');
+$routing->get('/api/settings/packs', PackApiController::class, 'getSettings');
 $routing->get('/api/packs/history', PackApiController::class, 'history');
+$routing->get('/api/collection', CollectionApiController::class, 'collection');
 
 try {
     $routeFound = $routing->dispatch(

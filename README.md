@@ -168,6 +168,7 @@ the body is read; POST routes also require the `X-CSRF-Token` header.
 | `POST` | `/api/packs/open` | logged in + CSRF | `PackApiController::open` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 409 `no_unopened_packs`, 422 `validation_failed` / `invalid_quantity`, 500 `internal_error` |
 | `POST` | `/api/settings/packs` | logged in + CSRF | `PackApiController::saveSettings` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
 | `GET` | `/api/packs/history?offset=&limit=` | logged in | `PackApiController::history` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
+| `GET` | `/api/collection?rarity=&q=&sort=&offset=` | logged in | `CollectionApiController::collection` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
 
 ## Project status
 
@@ -331,7 +332,7 @@ Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsR
 | `sound_enabled` | boolean | `true` | Passed to the sound module |
 | `sound_volume` | `0..100` | `70` | Passed to the sound module |
 
-The values are read from `data-*` attributes on `[data-packs-root]` by `public/js/packs/settings.js` and saved through `POST /api/settings/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored.
+The values are managed on the pack opening settings page (`/settings/packs`) and saved through `POST /api/settings/packs`; the opening flow reads them via `GET /api/settings/packs` at the start of `/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored.
 
 With `prefers-reduced-motion: reduce`, the CSS disables the reveal/tear transitions and burst animations; in auto mode the stage reveals the remaining cards immediately instead of animating them.
 
