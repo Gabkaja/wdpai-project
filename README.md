@@ -83,6 +83,7 @@ public/js/packs/              # packs page modules: index, state, buy, open, set
 public/views/*.html.php       # views (content fragments inserted into the layout)
 public/views/layout.html.php  # shared layout (header, content, footer)
 public/views/partials/*.php   # partials: header, footer, card-list
+public/uploads/avatars/       # avatar files (ignored by git except .gitkeep)
 src/Routing.php               # route registration and dispatch
 src/controllers/              # controllers (App\Controller namespace)
 src/Model/                    # data models (App\Model namespace)
@@ -101,6 +102,7 @@ database/05-packs.sql         # pack_settings, pack_openings, pack_opening_cards
 database/06-leaderboard-packs.sql # leaderboard_view with packs_opened column
 database/07-pack-stock-and-settings.sql # users.unopened_packs, pack_purchases, user_settings, is_new
 database/08-pack-purchase-limit.sql    # pack_settings.max_purchase_packs
+database/09-avatar.sql                 # users.avatar_path
 docker/                       # nginx, php and db configuration
 ```
 
@@ -555,6 +557,22 @@ docker compose up --build -d
 ```
 
 All seed users share the developer-only password `StreamRip123!` (hashed once with `password_hash()`). This password is for local development only and must not be used in production.
+
+### Avatar storage
+
+The `php` image includes the `gd` extension with JPEG, PNG and WebP support, plus `fileinfo`. Avatar files live in `public/uploads/avatars/` (ignored by git except `.gitkeep`), are served statically by nginx, and PHP files under `/uploads/` are blocked. Avatars are limited to 2 MB in the application; PHP and nginx limits are set higher (512 MB and 3 MB).
+
+The `users.avatar_path` column is added by `database/09-avatar.sql`. A fresh database volume applies it automatically; an existing database needs the migration run manually:
+
+```bash
+docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB' < database/09-avatar.sql
+```
+
+On PowerShell:
+
+```powershell
+Get-Content database\09-avatar.sql | docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
+```
 
 ## Verification
 
