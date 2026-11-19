@@ -129,15 +129,19 @@ final class PackApiController extends AppController
             $this->jsonError(422, 'validation_failed', 'Validation failed.', $fields);
         }
 
+        $pdo = (new Database())->connect();
+        $repository = new UserSettingsRepository($pdo);
+        $current = $repository->find($user->getId());
+
         $settings = new UserSettings(
             $body['reveal_mode'],
             $body['multi_open_mode'],
             $body['sound_enabled'],
-            $body['sound_volume']
+            $body['sound_volume'],
+            $current->getCollectionVisibility()
         );
 
-        $pdo = (new Database())->connect();
-        (new UserSettingsRepository($pdo))->save($user->getId(), $settings);
+        $repository->save($user->getId(), $settings);
 
         $this->json(200, [
             'ok' => true,

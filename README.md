@@ -103,6 +103,7 @@ database/06-leaderboard-packs.sql # leaderboard_view with packs_opened column
 database/07-pack-stock-and-settings.sql # users.unopened_packs, pack_purchases, user_settings, is_new
 database/08-pack-purchase-limit.sql    # pack_settings.max_purchase_packs
 database/09-avatar.sql                 # users.avatar_path
+database/10-privacy.sql                # user_settings.collection_visibility
 docker/                       # nginx, php and db configuration
 ```
 
@@ -330,7 +331,7 @@ After changing weights, verify the total: `SELECT code, drop_weight FROM raritie
 
 ### Pack opening settings
 
-Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsRepository::find()` returns the defaults when no row exists (`auto`, `queue`, sound on, volume `70`); saving is an UPSERT. The defaults in PHP and in the `CHECK` constraints of `database/07-pack-stock-and-settings.sql` are identical.
+Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsRepository::find()` returns the defaults when no row exists (`auto`, `queue`, sound on, volume `70`, visibility `public`); saving is an UPSERT. The defaults in PHP match the column defaults and `CHECK` constraints in the migration files.
 
 | Column | Values | Default | Effect |
 |---|---|---|---|
@@ -338,8 +339,21 @@ Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsR
 | `multi_open_mode` | `queue`, `all_at_once` | `queue` | Queue reveals one pack at a time; all-at-once builds every pack on one stage |
 | `sound_enabled` | boolean | `true` | Passed to the sound module |
 | `sound_volume` | `0..100` | `70` | Passed to the sound module |
+| `collection_visibility` | `public`, `private` | `public` | Controls whether other users can see the card list on `/users/{id}` |
 
-The values are managed on the pack opening settings page (`/settings/packs`) and saved through `POST /api/settings/packs`; the opening flow reads them via `GET /api/settings/packs` at the start of `/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored.
+The pack opening values are managed on the pack opening settings page (`/settings/packs`) and saved through `POST /api/settings/packs`; the opening flow reads them via `GET /api/settings/packs` at the start of `/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored. The `collection_visibility` value is not exposed in the UI or API yet.
+
+The `collection_visibility` column is added by `database/10-privacy.sql`. A fresh database volume applies it automatically; an existing database needs the migration run manually:
+
+```bash
+docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB' < database/10-privacy.sql
+```
+
+On PowerShell:
+
+```powershell
+Get-Content database\10-privacy.sql | docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
+```
 
 With `prefers-reduced-motion: reduce`, the CSS disables the reveal/tear transitions and burst animations; in auto mode the stage reveals the remaining cards immediately instead of animating them.
 
@@ -451,6 +465,7 @@ erDiagram
         varchar multi_open_mode
         boolean sound_enabled
         smallint sound_volume
+        varchar collection_visibility
         timestamptz updated_at
     }
     pack_openings {
@@ -531,11 +546,11 @@ Defined in `database/02-views.sql` and extended by `database/06-leaderboard-pack
 | `GET /admin` | `AdminController::index` | `LogRepository::latest(50)` | `SELECT l.id, l.level, l.message, u.username, l.created_at FROM system_logs l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.created_at DESC, l.id DESC LIMIT :limit` |
 | `GET /admin` | `AdminController::index` | `RarityRepository::all()` | Rarity query |
 | Error 500 | `public/index.php` catch | `LogRepository::add()` | `INSERT INTO system_logs (level, message, context, user_id) VALUES (:level, :message, CAST(:context AS JSONB), :user_id)` |
-| `GET /packs` | `PackController::index` | `PackRepository::settings()`, `UserSettingsRepository::find(int)`, `RarityRepository::odds()`, `PackRepository::historyByUser(int, int, int)` | `SELECT cards_per_pack, cost_points, max_bulk_packs, max_purchase_packs FROM pack_settings WHERE id = 1`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume FROM user_settings WHERE user_id = :user_id`; `SELECT r.code, r.name, r.drop_weight, COUNT(c.id) AS card_count FROM rarities r LEFT JOIN cards c ON c.rarity_id = r.id GROUP BY r.id ORDER BY r.sort_order`; history queries below |
+| `GET /packs` | `PackController::index` | `PackRepository::settings()`, `UserSettingsRepository::find(int)`, `RarityRepository::odds()`, `PackRepository::historyByUser(int, int, int)` | `SELECT cards_per_pack, cost_points, max_bulk_packs, max_purchase_packs FROM pack_settings WHERE id = 1`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility FROM user_settings WHERE user_id = :user_id`; `SELECT r.code, r.name, r.drop_weight, COUNT(c.id) AS card_count FROM rarities r LEFT JOIN cards c ON c.rarity_id = r.id GROUP BY r.id ORDER BY r.sort_order`; history queries below |
 | `GET /packs/{id}` | `PackController::show` | `PackRepository::findOpening(int)`, `RarityRepository::odds()` | `SELECT po.id AS opening_id, po.user_id, po.opened_at, poc.slot, poc.is_new, c..., r.code AS rarity_code, r.name AS rarity_name FROM pack_openings po LEFT JOIN pack_opening_cards poc ON poc.opening_id = po.id LEFT JOIN cards c ON c.id = poc.card_id LEFT JOIN rarities r ON r.id = c.rarity_id WHERE po.id = :id ORDER BY poc.slot`; odds query above |
 | `POST /api/packs/buy` | `PackApiController::buy` | `PackRepository::buy(int, int)` | `SELECT points, unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET points = points - :total, unopened_packs = unopened_packs + :quantity WHERE id = :id`; `INSERT INTO pack_purchases (user_id, quantity, points_spent) VALUES (:user_id, :quantity, :points_spent)`; `LogRepository::add()` |
 | `POST /api/packs/open` | `PackApiController::open` | `PackRepository::openFromStock(int, int)`, `PackRepository::findOpeningsByIds(int, array)`, `UserRepository::findById(int)` | `SELECT unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET unopened_packs = unopened_packs - :count WHERE id = :id`; `INSERT INTO pack_openings (user_id) VALUES (:user_id) RETURNING id`; `INSERT INTO user_cards (user_id, card_id) VALUES (...) ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1 RETURNING quantity`; `INSERT INTO pack_opening_cards (opening_id, slot, card_id, is_new) VALUES (...)`; openings query with `po.user_id = :user_id AND po.id IN (...)`; `SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users WHERE id = :id` |
-| `POST /api/settings/packs` | `PackApiController::saveSettings` | `UserSettingsRepository::save(int, UserSettings)` | `INSERT INTO user_settings (user_id, reveal_mode, multi_open_mode, sound_enabled, sound_volume, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...` |
+| `POST /api/settings/packs` | `PackApiController::saveSettings` | `UserSettingsRepository::save(int, UserSettings)` | `INSERT INTO user_settings (user_id, reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...` |
 | `POST /api/settings/password` | `AccountApiController::changePassword` | `UserRepository::findPasswordHashById(int)`, `UserRepository::updatePasswordHash(int, string)`, `LogRepository::add()` | `SELECT password_hash FROM users WHERE id = :id`; `UPDATE users SET password_hash = :password_hash WHERE id = :id`; `INSERT INTO system_logs ...` |
 | `POST /api/settings/avatar` | `AccountApiController::uploadAvatar` | `AvatarProcessor::process(string, int, int)`, `UserRepository::updateAvatarPath(int, ?string)`, `LogRepository::add()` | `UPDATE users SET avatar_path = :avatar_path WHERE id = :id`; `INSERT INTO system_logs ...` |
 | `POST /api/settings/avatar/delete` | `AccountApiController::deleteAvatar` | `UserRepository::updateAvatarPath(int, ?string)`, `LogRepository::add()` | `UPDATE users SET avatar_path = :avatar_path WHERE id = :id`; `INSERT INTO system_logs ...` |

@@ -10,13 +10,15 @@ final class UserSettings
     private readonly string $multiOpenMode;
     private readonly bool $soundEnabled;
     private readonly int $soundVolume;
+    private readonly string $collectionVisibility;
 
-    public function __construct(string $revealMode, string $multiOpenMode, bool $soundEnabled, int $soundVolume)
+    public function __construct(string $revealMode, string $multiOpenMode, bool $soundEnabled, int $soundVolume, string $collectionVisibility)
     {
         $this->revealMode = $revealMode;
         $this->multiOpenMode = $multiOpenMode;
         $this->soundEnabled = $soundEnabled;
         $this->soundVolume = $soundVolume;
+        $this->collectionVisibility = $collectionVisibility;
     }
 
     public function getRevealMode(): string
@@ -37,5 +39,10 @@ final class UserSettings
     public function getSoundVolume(): int
     {
         return $this->soundVolume;
+    }
+
+    public function getCollectionVisibility(): string
+    {
+        return $this->collectionVisibility;
     }
 }
