@@ -181,7 +181,7 @@ Przepływ: **nginx → `public/index.php` → `Routing::dispatch()` → kontrole
 
 Nie traktuj poniższych jako błędów do „naprawienia” bez polecenia:
 
-- Formularze avatar upload i promo code w `/profile` nie mają tras POST (celowy placeholder do czasu wdrożenia kolekcji i punktów).
+- Formularz promo code w `/profile` nie ma trasy POST (celowy placeholder do czasu wdrożenia kolekcji i punktów). Upload awatara jest w `/settings/account`.
 - `public/js/sound.js` jest placeholderem: `configure()` i `play()` nic nie robią, więc ustawienia dźwięku są zapisywane, ale nie odtwarzają audio.
 - Routing obsługuje tylko parametry numeryczne (świadome, tymczasowe).
 - Katalog `src/controllers` (mała litera) odbiega od PSR-4 (`src/Controller`) i działa

@@ -19,7 +19,7 @@ final class UserRepository
 
     public function all(): array
     {
-        $statement = $this->pdo->query('SELECT id, username, email, role, points, unopened_packs, created_at FROM users ORDER BY id');
+        $statement = $this->pdo->query('SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users ORDER BY id');
 
         $users = [];
 
@@ -31,7 +31,8 @@ final class UserRepository
                 $row['role'],
                 (int) $row['points'],
                 (int) $row['unopened_packs'],
-                new DateTimeImmutable($row['created_at'])
+                new DateTimeImmutable($row['created_at']),
+                $row['avatar_path'] !== null ? (string) $row['avatar_path'] : null
             );
         }
 
@@ -40,7 +41,7 @@ final class UserRepository
 
     public function findById(int $id): ?User
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, role, points, unopened_packs, created_at FROM users WHERE id = :id');
+        $statement = $this->pdo->prepare('SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users WHERE id = :id');
 
         $statement->execute([':id' => $id]);
 
@@ -73,7 +74,7 @@ final class UserRepository
 
     public function create(string $username, string $email, string $passwordHash): User
     {
-        $statement = $this->pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:username, :email, :password_hash) RETURNING id, username, email, role, points, unopened_packs, created_at');
+        $statement = $this->pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:username, :email, :password_hash) RETURNING id, username, email, role, points, unopened_packs, avatar_path, created_at');
 
         $statement->execute([
             ':username' => $username,
@@ -92,7 +93,7 @@ final class UserRepository
 
     public function findByEmailWithHash(string $email): ?array
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, role, points, unopened_packs, created_at FROM users WHERE LOWER(email) = LOWER(:email)');
+        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, role, points, unopened_packs, avatar_path, created_at FROM users WHERE LOWER(email) = LOWER(:email)');
 
         $statement->execute([':email' => $email]);
 
@@ -108,6 +109,21 @@ final class UserRepository
         ];
     }
 
+    public function findPasswordHashById(int $id): ?string
+    {
+        $statement = $this->pdo->prepare('SELECT password_hash FROM users WHERE id = :id');
+
+        $statement->execute([':id' => $id]);
+
+        $row = $statement->fetch();
+
+        if ($row === false) {
+            return null;
+        }
+
+        return $row['password_hash'];
+    }
+
     public function updatePasswordHash(int $id, string $passwordHash): void
     {
         $statement = $this->pdo->prepare('UPDATE users SET password_hash = :password_hash WHERE id = :id');
@@ -116,6 +132,14 @@ final class UserRepository
             ':id' => $id,
             ':password_hash' => $passwordHash,
         ]);
+    }
+
+    public function updateAvatarPath(int $userId, ?string $path): void
+    {
+        $statement = $this->pdo->prepare('UPDATE users SET avatar_path = :avatar_path WHERE id = :id');
+        $statement->bindValue(':avatar_path', $path, $path === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $statement->bindValue(':id', $userId, PDO::PARAM_INT);
+        $statement->execute();
     }
 
     public function addPoints(int $userId, int $amount): void
@@ -146,7 +170,8 @@ final class UserRepository
             $row['role'],
             (int) $row['points'],
             (int) $row['unopened_packs'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            $row['avatar_path'] !== null ? (string) $row['avatar_path'] : null
         );
     }
 
@@ -159,7 +184,8 @@ final class UserRepository
             $row['role'],
             (int) $row['points'],
             (int) $row['unopened_packs'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            $row['avatar_path'] !== null ? (string) $row['avatar_path'] : null
         );
     }
 }

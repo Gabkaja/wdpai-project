@@ -73,6 +73,19 @@ abstract class AppController
         header('Pragma: no-cache');
     }
 
+    protected function avatarUrl(?string $avatarPath): ?string
+    {
+        if ($avatarPath === null || $avatarPath === '') {
+            return null;
+        }
+
+        $path = ltrim($avatarPath, '/');
+        $file = dirname(__DIR__, 2) . '/public/' . $path;
+        $version = is_file($file) ? (int) filemtime($file) : time();
+
+        return '/' . $path . '?v=' . $version;
+    }
+
     protected function verifyCsrfOrAbort(): void
     {
         $token = $_POST['csrf_token'] ?? null;

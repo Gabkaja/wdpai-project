@@ -55,6 +55,11 @@ final class Session
         self::csrfToken();
     }
 
+    public static function regenerate(): void
+    {
+        session_regenerate_id(true);
+    }
+
     public static function logout(): void
     {
         $_SESSION = [];

@@ -16,8 +16,9 @@ final class LeaderboardEntry
     private readonly DateTimeImmutable $joinedAt;
     private readonly ?string $rarestCardName;
     private readonly int $packsOpened;
+    private readonly ?string $avatarPath;
 
-    public function __construct(int $userId, string $username, int $totalCards, int $uniqueCards, int $rankPosition, DateTimeImmutable $joinedAt, ?string $rarestCardName, int $packsOpened)
+    public function __construct(int $userId, string $username, int $totalCards, int $uniqueCards, int $rankPosition, DateTimeImmutable $joinedAt, ?string $rarestCardName, int $packsOpened, ?string $avatarPath)
     {
         $this->userId = $userId;
         $this->username = $username;
@@ -27,6 +28,7 @@ final class LeaderboardEntry
         $this->joinedAt = $joinedAt;
         $this->rarestCardName = $rarestCardName;
         $this->packsOpened = $packsOpened;
+        $this->avatarPath = $avatarPath;
     }
 
     public function getUserId(): int
@@ -67,5 +69,10 @@ final class LeaderboardEntry
     public function getPacksOpened(): int
     {
         return $this->packsOpened;
+    }
+
+    public function getAvatarPath(): ?string
+    {
+        return $this->avatarPath;
     }
 }

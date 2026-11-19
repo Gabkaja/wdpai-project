@@ -9,14 +9,15 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 |---|---|
 | Home | Stream banner, live stats and a card catalog with rarity filters |
 | Card catalog | All cards (`/cards`) and card details (`/cards/{id}`) |
-| Profile | Collection stats, owned cards and pack wallet (requires login); avatar upload and promo code forms have no POST routes yet |
+| Profile | Collection stats, owned cards and pack wallet (requires login); the promo code form has no POST route yet |
+| Account settings | Change password, upload or remove an avatar and manage the Kick connection from `/settings/account` (login, JSON envelope, CSRF on POST) |
 | Packs | Buy packs and open them from stock (`/packs`, requires login). Buying and opening are separate transactions; results are stored per user |
 | Pack opening result | Read-only opening view (`/packs/{id}`, owner only) with revealed cards, NEW markers, rarity glow and the opening date |
-| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs` and `/api/packs/history` (login, JSON envelope, CSRF on POST) |
-| Leaderboard | Podium and the full collector ranking, including packs opened per user |
+| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs`, `/api/settings/password`, `/api/settings/avatar`, `/api/settings/avatar/delete`, `/api/settings/kick/disconnect` and `/api/packs/history` (login, JSON envelope, CSRF on POST) |
+| Leaderboard | Podium and the full collector ranking with avatars, including packs opened per user |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
-| Kick login | Log in with Kick (OAuth 2.1 + PKCE) and link/unlink Kick account from profile |
+| Kick login | Log in with Kick (OAuth 2.1 + PKCE) and connect or disconnect Kick from account settings |
 | About | Project information and how it works (`/about`) |
 | 404 | Consistent error screen for unknown routes and missing cards |
 
@@ -82,6 +83,7 @@ public/js/packs/              # packs page modules: index, state, buy, open, set
 public/views/*.html.php       # views (content fragments inserted into the layout)
 public/views/layout.html.php  # shared layout (header, content, footer)
 public/views/partials/*.php   # partials: header, footer, card-list
+public/uploads/avatars/       # avatar files (ignored by git except .gitkeep)
 src/Routing.php               # route registration and dispatch
 src/controllers/              # controllers (App\Controller namespace)
 src/Model/                    # data models (App\Model namespace)
@@ -100,6 +102,7 @@ database/05-packs.sql         # pack_settings, pack_openings, pack_opening_cards
 database/06-leaderboard-packs.sql # leaderboard_view with packs_opened column
 database/07-pack-stock-and-settings.sql # users.unopened_packs, pack_purchases, user_settings, is_new
 database/08-pack-purchase-limit.sql    # pack_settings.max_purchase_packs
+database/09-avatar.sql                 # users.avatar_path
 docker/                       # nginx, php and db configuration
 ```
 
@@ -154,7 +157,6 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 | GET | `/auth/kick/login` | public | `KickController::login` |
 | GET | `/auth/kick/callback` | public | `KickController::callback` |
 | GET | `/profile/kick/connect` | logged in | `KickController::connect` |
-| POST | `/profile/kick/unlink` | logged in | `KickController::unlink` |
 
 ### JSON API
 
@@ -167,6 +169,10 @@ the body is read; POST routes also require the `X-CSRF-Token` header.
 | `POST` | `/api/packs/buy` | logged in + CSRF | `PackApiController::buy` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 409 `insufficient_points`, 422 `validation_failed` / `invalid_quantity`, 500 `internal_error` |
 | `POST` | `/api/packs/open` | logged in + CSRF | `PackApiController::open` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 409 `no_unopened_packs`, 422 `validation_failed` / `invalid_quantity`, 500 `internal_error` |
 | `POST` | `/api/settings/packs` | logged in + CSRF | `PackApiController::saveSettings` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
+| `POST` | `/api/settings/password` | logged in + CSRF | `AccountApiController::changePassword` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
+| `POST` | `/api/settings/avatar` | logged in + CSRF | `AccountApiController::uploadAvatar` | 200, 401 `unauthenticated`, 403 `csrf_failed`, 422 `avatar_missing` / `avatar_invalid_type` / `avatar_too_large` / `avatar_invalid_image` / `avatar_dimensions_too_large` / `avatar_upload_failed` / `avatar_processing_failed`, 500 `internal_error` |
+| `POST` | `/api/settings/avatar/delete` | logged in + CSRF | `AccountApiController::deleteAvatar` | 200, 401 `unauthenticated`, 403 `csrf_failed`, 409 `avatar_not_found`, 500 `internal_error` |
+| `POST` | `/api/settings/kick/disconnect` | logged in + CSRF | `AccountApiController::disconnectKick` | 200, 401 `unauthenticated`, 403 `csrf_failed`, 409 `kick_not_connected` / `password_required`, 500 `internal_error` |
 | `GET` | `/api/packs/history?offset=&limit=` | logged in | `PackApiController::history` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
 | `GET` | `/api/collection?rarity=&q=&sort=&offset=` | logged in | `CollectionApiController::collection` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
 
@@ -174,7 +180,7 @@ the body is read; POST routes also require the `X-CSRF-Token` header.
 
 The project is under active development. Known placeholders:
 
-- **Profile forms** — the avatar upload and promo code forms still render but have no POST routes (`/profile/avatar`, `/profile/redeem`). Packs are bought and opened on `/packs`.
+- **Profile form** — the promo code form still renders but has no POST route (`/profile/redeem`). Avatar upload lives in `/settings/account`. Packs are bought and opened on `/packs`.
 - **Role change in admin panel** — the admin panel lists roles (`viewer`, `admin`) but changing a user's role has no POST route yet.
 - **Shared layout** — views are rendered inside `public/views/layout.html.php`, which includes the `header` and `footer` partials. Views do not call them directly.
 - **Numeric route parameters only** (`\d+`).
@@ -194,6 +200,7 @@ The project is under active development. Known placeholders:
 
 - Passwords are hashed exclusively with `password_hash(..., PASSWORD_DEFAULT)` and verified with `password_verify()`.
 - Failed login returns the same generic message regardless of whether the e-mail exists.
+- Changing a password on `/settings/account` requires the current password, a new password of at least 8 characters, and a matching confirmation; on success the session id is regenerated, other devices stay logged in, and an `info` entry is written to `system_logs` without any password or hash.
 
 ### CSRF
 
@@ -242,8 +249,8 @@ Kick is used only for logging in and linking to an existing StreamRip account. T
 ### Linking rules
 
 - Login (`purpose=login`): the Kick user id is looked up in `kick_accounts`. If a link exists, the linked StreamRip user is logged in (`Session::login`, which regenerates the session id). If no link exists, the user is shown an error and redirected to `/login`.
-- Link (`purpose=link`): requires the session user to match the user id stored in the OAuth state. A new row is inserted into `kick_accounts`. If the Kick account is already linked to another StreamRip account (unique violation `23505`), an error is shown. On success an `info` entry is written to `system_logs` with the user id.
-- `POST /profile/kick/unlink` (requires login + CSRF) deletes the link and writes an `info` entry to `system_logs`.
+- Link (`purpose=link`): requires the session user to match the user id stored in the OAuth state. A new row is inserted into `kick_accounts`. If the Kick account is already linked to another StreamRip account (unique violation `23505`), an error is shown. On success an `info` entry is written to `system_logs` with the user id. Success and error flashes redirect back to `/settings/account`.
+- `POST /api/settings/kick/disconnect` (requires login + CSRF) deletes the link and writes an `info` entry to `system_logs`. It returns `409 kick_not_connected` when there is no link and `409 password_required` when the account has no password to log in with.
 
 ### Database table
 
@@ -340,7 +347,7 @@ With `prefers-reduced-motion: reduce`, the CSS disables the reveal/tear transiti
 
 The packs page is rendered by the server; plain ES modules only extend it and there is no build step. Every request goes through `public/js/api.js`:
 
-- `credentials: 'same-origin'`, with `Accept: application/json` and `Content-Type: application/json` headers.
+- `credentials: 'same-origin'`, with `Accept: application/json` and `Content-Type: application/json` headers; `FormData` bodies are sent without setting `Content-Type` so the browser adds the multipart boundary.
 - `X-CSRF-Token` copied from `<meta name="csrf-token">` (rendered by the layout only for logged-in users).
 - 10-second timeout implemented with `AbortController`.
 - The body is parsed as JSON; a non-JSON body, a non-`2xx` status or a missing envelope becomes an `ApiError` with `status`, `code`, `message` and `fields`.
@@ -364,6 +371,8 @@ Response envelope:
 | 404 | `not_found` | Unknown `/api/...` route |
 | 409 | `insufficient_points` | Buying costs more than the current balance |
 | 409 | `no_unopened_packs` | Opening more packs than the stock |
+| 409 | `kick_not_connected` | Disconnecting Kick when no link exists |
+| 409 | `password_required` | Disconnecting Kick when the account has no password to log in with |
 | 422 | `validation_failed` | Missing/invalid fields or unknown fields |
 | 422 | `invalid_quantity` | Quantity outside `1..max_purchase_packs` or `1..max_bulk_packs` |
 | 500 | `internal_error` | Uncaught server exception (details go to `system_logs`) |
@@ -518,15 +527,19 @@ Defined in `database/02-views.sql` and extended by `database/06-leaderboard-pack
 | `GET /cards/{id}` | `CardController::show` | `CardRepository::find(int)` | Same card query with `WHERE c.id = :id` (named parameter) |
 | `GET /leaderboard` | `LeaderboardController::index` | `LeaderboardRepository::all()` | `SELECT user_id, username, total_cards, unique_cards, rank_position, joined_at, rarest_card_name FROM leaderboard_view ORDER BY rank_position, username` |
 | `GET /admin` | `AdminController::index` | `CardRepository::all()` | Card query (JOIN rarities) |
-| `GET /admin` | `AdminController::index` | `UserRepository::all()` | `SELECT id, username, email, role, points, created_at FROM users ORDER BY id` |
+| `GET /admin` | `AdminController::index` | `UserRepository::all()` | `SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users ORDER BY id` |
 | `GET /admin` | `AdminController::index` | `LogRepository::latest(50)` | `SELECT l.id, l.level, l.message, u.username, l.created_at FROM system_logs l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.created_at DESC, l.id DESC LIMIT :limit` |
 | `GET /admin` | `AdminController::index` | `RarityRepository::all()` | Rarity query |
 | Error 500 | `public/index.php` catch | `LogRepository::add()` | `INSERT INTO system_logs (level, message, context, user_id) VALUES (:level, :message, CAST(:context AS JSONB), :user_id)` |
 | `GET /packs` | `PackController::index` | `PackRepository::settings()`, `UserSettingsRepository::find(int)`, `RarityRepository::odds()`, `PackRepository::historyByUser(int, int, int)` | `SELECT cards_per_pack, cost_points, max_bulk_packs, max_purchase_packs FROM pack_settings WHERE id = 1`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume FROM user_settings WHERE user_id = :user_id`; `SELECT r.code, r.name, r.drop_weight, COUNT(c.id) AS card_count FROM rarities r LEFT JOIN cards c ON c.rarity_id = r.id GROUP BY r.id ORDER BY r.sort_order`; history queries below |
 | `GET /packs/{id}` | `PackController::show` | `PackRepository::findOpening(int)`, `RarityRepository::odds()` | `SELECT po.id AS opening_id, po.user_id, po.opened_at, poc.slot, poc.is_new, c..., r.code AS rarity_code, r.name AS rarity_name FROM pack_openings po LEFT JOIN pack_opening_cards poc ON poc.opening_id = po.id LEFT JOIN cards c ON c.id = poc.card_id LEFT JOIN rarities r ON r.id = c.rarity_id WHERE po.id = :id ORDER BY poc.slot`; odds query above |
 | `POST /api/packs/buy` | `PackApiController::buy` | `PackRepository::buy(int, int)` | `SELECT points, unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET points = points - :total, unopened_packs = unopened_packs + :quantity WHERE id = :id`; `INSERT INTO pack_purchases (user_id, quantity, points_spent) VALUES (:user_id, :quantity, :points_spent)`; `LogRepository::add()` |
-| `POST /api/packs/open` | `PackApiController::open` | `PackRepository::openFromStock(int, int)`, `PackRepository::findOpeningsByIds(int, array)`, `UserRepository::findById(int)` | `SELECT unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET unopened_packs = unopened_packs - :count WHERE id = :id`; `INSERT INTO pack_openings (user_id) VALUES (:user_id) RETURNING id`; `INSERT INTO user_cards (user_id, card_id) VALUES (...) ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1 RETURNING quantity`; `INSERT INTO pack_opening_cards (opening_id, slot, card_id, is_new) VALUES (...)`; openings query with `po.user_id = :user_id AND po.id IN (...)`; `SELECT id, username, email, role, points, unopened_packs, created_at FROM users WHERE id = :id` |
+| `POST /api/packs/open` | `PackApiController::open` | `PackRepository::openFromStock(int, int)`, `PackRepository::findOpeningsByIds(int, array)`, `UserRepository::findById(int)` | `SELECT unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET unopened_packs = unopened_packs - :count WHERE id = :id`; `INSERT INTO pack_openings (user_id) VALUES (:user_id) RETURNING id`; `INSERT INTO user_cards (user_id, card_id) VALUES (...) ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1 RETURNING quantity`; `INSERT INTO pack_opening_cards (opening_id, slot, card_id, is_new) VALUES (...)`; openings query with `po.user_id = :user_id AND po.id IN (...)`; `SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users WHERE id = :id` |
 | `POST /api/settings/packs` | `PackApiController::saveSettings` | `UserSettingsRepository::save(int, UserSettings)` | `INSERT INTO user_settings (user_id, reveal_mode, multi_open_mode, sound_enabled, sound_volume, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...` |
+| `POST /api/settings/password` | `AccountApiController::changePassword` | `UserRepository::findPasswordHashById(int)`, `UserRepository::updatePasswordHash(int, string)`, `LogRepository::add()` | `SELECT password_hash FROM users WHERE id = :id`; `UPDATE users SET password_hash = :password_hash WHERE id = :id`; `INSERT INTO system_logs ...` |
+| `POST /api/settings/avatar` | `AccountApiController::uploadAvatar` | `AvatarProcessor::process(string, int, int)`, `UserRepository::updateAvatarPath(int, ?string)`, `LogRepository::add()` | `UPDATE users SET avatar_path = :avatar_path WHERE id = :id`; `INSERT INTO system_logs ...` |
+| `POST /api/settings/avatar/delete` | `AccountApiController::deleteAvatar` | `UserRepository::updateAvatarPath(int, ?string)`, `LogRepository::add()` | `UPDATE users SET avatar_path = :avatar_path WHERE id = :id`; `INSERT INTO system_logs ...` |
+| `POST /api/settings/kick/disconnect` | `AccountApiController::disconnectKick` | `KickAccountRepository::findByUserId(int)`, `UserRepository::findPasswordHashById(int)`, `KickAccountRepository::unlink(int)`, `LogRepository::add()` | `SELECT user_id, kick_user_id, kick_username, linked_at FROM kick_accounts WHERE user_id = :user_id`; `SELECT password_hash FROM users WHERE id = :id`; `DELETE FROM kick_accounts WHERE user_id = :user_id`; `INSERT INTO system_logs ...` |
 | `GET /api/packs/history` | `PackApiController::history` | `PackRepository::historyByUser(int, int, int)` | `SELECT id FROM pack_openings WHERE user_id = :user_id ORDER BY opened_at DESC, id DESC OFFSET :offset LIMIT :limit`; `SELECT ... FROM pack_openings po LEFT JOIN ... WHERE po.user_id = :user_id AND po.id IN (...) ORDER BY po.id, poc.slot` |
 | `POST /admin/users/{id}/points` | `AdminController::grantPoints` | `UserRepository::addPoints(int, int)`, `LogRepository::add()` | `UPDATE users SET points = points + :amount WHERE id = :id`, `INSERT INTO system_logs ...` |
 
@@ -548,6 +561,22 @@ docker compose up --build -d
 ```
 
 All seed users share the developer-only password `StreamRip123!` (hashed once with `password_hash()`). This password is for local development only and must not be used in production.
+
+### Avatar storage
+
+The `php` image includes the `gd` extension with JPEG, PNG and WebP support, plus `fileinfo`. Avatar files live in `public/uploads/avatars/` (ignored by git except `.gitkeep`), are served statically by nginx, and PHP files under `/uploads/` are blocked. Avatars are limited to 2 MB in the application; PHP and nginx limits are set higher (512 MB and 3 MB).
+
+The `users.avatar_path` column is added by `database/09-avatar.sql`. A fresh database volume applies it automatically; an existing database needs the migration run manually:
+
+```bash
+docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB' < database/09-avatar.sql
+```
+
+On PowerShell:
+
+```powershell
+Get-Content database\09-avatar.sql | docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
+```
 
 ## Verification
 

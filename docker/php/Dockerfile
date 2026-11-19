@@ -11,15 +11,17 @@ RUN apk add --no-cache \
         libzip \
         libpng \
         libjpeg-turbo \
+        libwebp \
         postgresql-libs \
     && apk add --no-cache --virtual .build-deps \
         zlib-dev \
         libzip-dev \
         libpng-dev \
         libjpeg-turbo-dev \
+        libwebp-dev \
         postgresql-dev \
         $PHPIZE_DEPS \
-    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         opcache \
         zip \

@@ -1,5 +1,7 @@
     <main class="profile">
         <?php $flash = $flash ?? null; ?>
+        <?php $avatarPath = $avatarPath ?? null; ?>
+        <?php $avatarUrl = $avatarUrl ?? null; ?>
         <?php if ($flash !== null): ?>
             <div class="auth-alert<?= $flash['type'] === 'error' ? ' auth-alert--error' : '' ?>" role="alert">
                 <span class="icon" aria-hidden="true"><?= $flash['type'] === 'error' ? 'error' : 'check_circle' ?></span>
@@ -9,7 +11,12 @@
 
         <section class="player-card" aria-labelledby="player-title">
             <header class="player-card__header">
-                <span class="player-card__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($username, 0, 1))) ?></span>
+                <?php $this->partial('avatar', [
+                    'username' => $username,
+                    'avatarPath' => $avatarPath,
+                    'avatarUrl' => $avatarUrl,
+                    'size' => 'md',
+                ]); ?>
                 <div class="player-card__identity">
                     <h1 class="player-card__name" id="player-title"><?= htmlspecialchars($username) ?></h1>
                     <span class="player-card__role"><?= htmlspecialchars(ucfirst($role)) ?></span>
@@ -62,31 +69,6 @@
 
         <div class="profile-layout">
             <div class="profile-sidebar">
-                <section class="profile-panel" aria-labelledby="avatar-heading">
-                    <div class="profile-panel__head">
-                        <h2 class="profile-panel__title" id="avatar-heading">
-                            <span class="icon" aria-hidden="true">account_box</span>
-                            Avatar
-                        </h2>
-                    </div>
-
-                    <div class="avatar-drop">
-                        <span class="avatar-drop__icon">
-                            <span class="icon" aria-hidden="true">person</span>
-                        </span>
-                        <p class="profile-panel__text">No avatar uploaded yet.<br>Supported format: PNG, JPG</p>
-                    </div>
-
-                    <form class="profile-panel__form" method="post" action="/profile/avatar" enctype="multipart/form-data">
-                        <label for="avatar-file">Choose a profile picture</label>
-                        <input type="file" id="avatar-file" name="avatar" accept="image/*" required>
-                        <button class="button button--primary" type="submit">
-                            <span class="icon" aria-hidden="true">upload</span>
-                            Upload avatar
-                        </button>
-                    </form>
-                </section>
-
                 <section class="profile-panel" aria-labelledby="redeem-heading">
                     <div class="profile-panel__head">
                         <h2 class="profile-panel__title" id="redeem-heading">
@@ -109,36 +91,6 @@
                         <span class="profile-panel__success">Success (+1 pack)</span>
                     </p>
                 </section>
-
-                <?php if ($kickAccount !== null): ?>
-                    <section class="profile-panel" aria-labelledby="kick-heading">
-                        <div class="profile-panel__head">
-                            <h2 class="profile-panel__title" id="kick-heading">
-                                <span class="icon" aria-hidden="true">verified</span>
-                                Kick account
-                            </h2>
-                        </div>
-                        <p class="profile-panel__text">
-                            Connected as <strong><?= htmlspecialchars($kickAccount['kick_username']) ?></strong>.
-                        </p>
-                    </section>
-                <?php else: ?>
-                    <section class="profile-panel" aria-labelledby="kick-heading">
-                        <div class="profile-panel__head">
-                            <h2 class="profile-panel__title" id="kick-heading">
-                                <span class="icon" aria-hidden="true">verified</span>
-                                Kick account
-                            </h2>
-                        </div>
-                        <div class="profile-panel__text">
-                            Not connected. Link your Kick account to log in with Kick.
-                        </div>
-                        <a class="button button--primary" href="/profile/kick/connect">
-                            <span class="icon" aria-hidden="true">link</span>
-                            Connect Kick
-                        </a>
-                    </section>
-                <?php endif; ?>
             </div>
 
             <section class="profile-panel profile-collection" aria-labelledby="collection-heading">

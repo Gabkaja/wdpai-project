@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Database;
 use App\Repository\CollectionRepository;
-use App\Repository\KickAccountRepository;
 use App\Repository\LeaderboardRepository;
 
 final class ProfileController extends AppController
@@ -18,7 +17,6 @@ final class ProfileController extends AppController
 
         $pdo = (new Database())->connect();
         $collectionRepository = new CollectionRepository($pdo);
-        $kickAccount = (new KickAccountRepository($pdo))->findByUserId($user->getId());
         $collection = $collectionRepository->forUser($user->getId());
         $entry = (new LeaderboardRepository($pdo))->findByUserId($user->getId());
 
@@ -41,7 +39,8 @@ final class ProfileController extends AppController
             'packsOpened' => $entry?->getPacksOpened() ?? 0,
             'rarestCard' => $entry?->getRarestCardName(),
             'collection' => $collection,
-            'kickAccount' => $kickAccount,
+            'avatarPath' => $user->getAvatarPath(),
+            'avatarUrl' => $this->avatarUrl($user->getAvatarPath()),
         ]);
     }
 }
