@@ -519,21 +519,43 @@ main {
 }
 
 .avatar {
-  display: none;
+  display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: var(--size-control-sm);
-  height: var(--size-control-sm);
-  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border-radius: 50%;
   color: var(--color-on-primary);
   background: var(--color-text-strong);
   box-shadow: var(--shadow-accent-30);
-  text-decoration: none;
-  transition: box-shadow var(--transition);
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
 }
 
-.avatar .icon {
-  font-size: var(--size-icon-md);
+.avatar--sm {
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--fs-sm);
+}
+
+.avatar--md {
+  width: 6rem;
+  height: 6rem;
+  font-size: var(--fs-2xl);
+}
+
+.avatar--lg {
+  width: 8rem;
+  height: 8rem;
+  font-size: var(--fs-3xl);
+}
+
+.avatar__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* 4a. User menu
@@ -568,22 +590,6 @@ main {
 .user-menu__toggle:focus-visible {
   background: var(--color-surface-high);
   box-shadow: var(--shadow-inset-15);
-}
-
-.user-menu__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--size-control-sm);
-  height: var(--size-control-sm);
-  border-radius: var(--radius-round);
-  color: var(--color-on-primary);
-  background: var(--color-text-strong);
-  box-shadow: var(--shadow-accent-30);
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  line-height: 1;
 }
 
 .user-menu__panel {
@@ -827,31 +833,6 @@ main {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-lg);
-}
-
-.settings-avatar__preview {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 6rem;
-  height: 6rem;
-  overflow: hidden;
-  border-radius: var(--radius-round);
-  color: var(--color-on-primary);
-  background: var(--color-text-strong);
-  box-shadow: var(--shadow-accent-30);
-  font-family: var(--font-display);
-  font-size: var(--fs-2xl);
-  font-weight: 700;
-  line-height: 1;
-}
-
-.settings-avatar__image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .settings-avatar__controls {
@@ -2813,22 +2794,6 @@ main {
   gap: var(--space-md);
 }
 
-.player-card__avatar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 5.5rem;
-  height: 5.5rem;
-  border-radius: var(--radius-round);
-  color: var(--color-brand);
-  background: var(--color-surface-container);
-  box-shadow: var(--glow-brand-soft), inset 0 0 0 2px color-mix(in srgb, var(--color-brand) 40%, transparent);
-  font-family: var(--font-display);
-  font-size: var(--fs-3xl);
-  font-weight: 800;
-}
-
 .player-card__identity {
   display: flex;
   flex-direction: column;
@@ -4522,10 +4487,6 @@ main {
 .icon-button:hover {
   color: var(--color-brand);
   background: var(--color-surface-container);
-}
-
-.avatar:hover {
-  box-shadow: var(--shadow-accent-50);
 }
 
 .button--primary:hover {

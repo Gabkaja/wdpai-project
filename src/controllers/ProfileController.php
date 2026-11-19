@@ -39,6 +39,8 @@ final class ProfileController extends AppController
             'packsOpened' => $entry?->getPacksOpened() ?? 0,
             'rarestCard' => $entry?->getRarestCardName(),
             'collection' => $collection,
+            'avatarPath' => $user->getAvatarPath(),
+            'avatarUrl' => $this->avatarUrl($user->getAvatarPath()),
         ]);
     }
 }

@@ -14,13 +14,13 @@ ob_start();
     <h2 class="settings-section__title" id="avatar-heading">Avatar</h2>
 
     <div class="settings-avatar">
-        <span class="settings-avatar__preview" data-avatar-preview>
-            <?php if ($avatarUrl !== null): ?>
-                <img class="settings-avatar__image" src="<?= htmlspecialchars($avatarUrl, ENT_QUOTES, 'UTF-8') ?>" alt="" width="96" height="96">
-            <?php else: ?>
-                <?= htmlspecialchars(strtoupper(substr($currentUser->getUsername(), 0, 1)), ENT_QUOTES, 'UTF-8') ?>
-            <?php endif; ?>
-        </span>
+        <?php $this->partial('avatar', [
+            'username' => $currentUser->getUsername(),
+            'avatarPath' => $currentUser->getAvatarPath(),
+            'avatarUrl' => $avatarUrl,
+            'size' => 'md',
+            'preview' => true,
+        ]); ?>
 
         <div class="settings-avatar__controls">
             <span class="packs__label" id="avatar-label">Avatar</span>

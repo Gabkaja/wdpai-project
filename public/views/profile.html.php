@@ -1,5 +1,7 @@
     <main class="profile">
         <?php $flash = $flash ?? null; ?>
+        <?php $avatarPath = $avatarPath ?? null; ?>
+        <?php $avatarUrl = $avatarUrl ?? null; ?>
         <?php if ($flash !== null): ?>
             <div class="auth-alert<?= $flash['type'] === 'error' ? ' auth-alert--error' : '' ?>" role="alert">
                 <span class="icon" aria-hidden="true"><?= $flash['type'] === 'error' ? 'error' : 'check_circle' ?></span>
@@ -9,7 +11,12 @@
 
         <section class="player-card" aria-labelledby="player-title">
             <header class="player-card__header">
-                <span class="player-card__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($username, 0, 1))) ?></span>
+                <?php $this->partial('avatar', [
+                    'username' => $username,
+                    'avatarPath' => $avatarPath,
+                    'avatarUrl' => $avatarUrl,
+                    'size' => 'md',
+                ]); ?>
                 <div class="player-card__identity">
                     <h1 class="player-card__name" id="player-title"><?= htmlspecialchars($username) ?></h1>
                     <span class="player-card__role"><?= htmlspecialchars(ucfirst($role)) ?></span>

@@ -60,16 +60,4 @@ final class SettingsController extends AppController
             'section' => 'performance',
         ]);
     }
-
-    private function avatarUrl(?string $avatarPath): ?string
-    {
-        if ($avatarPath === null) {
-            return null;
-        }
-
-        $file = dirname(__DIR__, 2) . '/public/' . $avatarPath;
-        $version = is_file($file) ? (int) filemtime($file) : time();
-
-        return '/' . $avatarPath . '?v=' . $version;
-    }
 }

@@ -2,7 +2,12 @@
 if (isset($currentUser) && $currentUser !== null): ?>
     <div class="user-menu" data-dropdown>
         <button type="button" class="user-menu__toggle" data-dropdown-toggle aria-haspopup="true" aria-expanded="false" aria-controls="user-menu-panel">
-            <span class="user-menu__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($currentUser->getUsername(), 0, 1))) ?></span>
+            <?php $this->partial('avatar', [
+                'username' => $currentUser->getUsername(),
+                'avatarPath' => $currentUser->getAvatarPath(),
+                'avatarUrl' => $this->avatarUrl($currentUser->getAvatarPath()),
+                'size' => 'sm',
+            ]); ?>
             <span class="user-menu__name"><?= htmlspecialchars($currentUser->getUsername()) ?></span>
         </button>
         <ul class="user-menu__panel" id="user-menu-panel" data-dropdown-panel role="menu" hidden>

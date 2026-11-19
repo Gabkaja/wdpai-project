@@ -24,7 +24,7 @@ if (root) {
     function renderPreview(url) {
         if (url) {
             const image = document.createElement('img');
-            image.className = 'settings-avatar__image';
+            image.className = 'avatar__image';
             image.src = url;
             image.alt = '';
             image.width = 96;
