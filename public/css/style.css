@@ -874,6 +874,8 @@ main {
 }
 
 .settings-avatar__file {
+  align-self: flex-start;
+  width: auto;
   max-width: 100%;
   color: var(--color-text-muted);
   font: inherit;

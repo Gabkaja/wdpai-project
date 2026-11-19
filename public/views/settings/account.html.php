@@ -23,9 +23,9 @@ ob_start();
         </span>
 
         <div class="settings-avatar__controls">
-            <label class="packs__label" for="avatar-file">Avatar</label>
+            <span class="packs__label" id="avatar-label">Avatar</span>
             <p class="packs__field-description" id="avatar-hint">JPG, PNG or WebP, up to 2 MB</p>
-            <input class="settings-avatar__file" type="file" id="avatar-file" name="avatar" accept="image/jpeg,image/png,image/webp" aria-describedby="avatar-hint">
+            <input class="settings-avatar__file" type="file" id="avatar-file" name="avatar" accept="image/jpeg,image/png,image/webp" aria-labelledby="avatar-label" aria-describedby="avatar-hint">
 
             <div class="settings-avatar__actions">
                 <button class="button button--primary" type="button" data-avatar-upload>Upload</button>
