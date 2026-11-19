@@ -7,12 +7,15 @@ class ApiError extends Error {
     }
 }
 
-function headers() {
+function headers(isFormData = false) {
     const tokenEl = document.querySelector('meta[name="csrf-token"]');
     const result = {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
     };
+
+    if (!isFormData) {
+        result['Content-Type'] = 'application/json';
+    }
 
     if (tokenEl) {
         result['X-CSRF-Token'] = tokenEl.content;
@@ -24,11 +27,12 @@ function headers() {
 async function request(url, options) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const isFormData = options.body instanceof FormData;
 
     try {
         const response = await fetch(url, {
             ...options,
-            headers: { ...headers(), ...(options.headers || {}) },
+            headers: { ...headers(isFormData), ...(options.headers || {}) },
             credentials: 'same-origin',
             signal: controller.signal,
         });
@@ -80,6 +84,11 @@ export const api = {
     },
 
     post(url, body) {
-        return request(url, { method: 'POST', body: JSON.stringify(body) });
+        const isFormData = body instanceof FormData;
+
+        return request(url, {
+            method: 'POST',
+            body: isFormData ? body : JSON.stringify(body),
+        });
     },
 };

@@ -26,6 +26,7 @@ final class SettingsController extends AppController
             'pageTitle' => 'Account settings – StreamRip',
             'section' => 'account',
             'kickAccount' => $kickAccount,
+            'avatarUrl' => $this->avatarUrl($user->getAvatarPath()),
         ]);
     }
 
@@ -58,5 +59,17 @@ final class SettingsController extends AppController
             'pageTitle' => 'Performance settings – StreamRip',
             'section' => 'performance',
         ]);
+    }
+
+    private function avatarUrl(?string $avatarPath): ?string
+    {
+        if ($avatarPath === null) {
+            return null;
+        }
+
+        $file = dirname(__DIR__, 2) . '/public/' . $avatarPath;
+        $version = is_file($file) ? (int) filemtime($file) : time();
+
+        return '/' . $avatarPath . '?v=' . $version;
     }
 }

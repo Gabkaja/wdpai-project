@@ -15,8 +15,9 @@ final class User
     private readonly int $points;
     private readonly int $unopenedPacks;
     private readonly DateTimeImmutable $createdAt;
+    private readonly ?string $avatarPath;
 
-    public function __construct(int $id, string $username, string $email, string $role, int $points, int $unopenedPacks, DateTimeImmutable $createdAt)
+    public function __construct(int $id, string $username, string $email, string $role, int $points, int $unopenedPacks, DateTimeImmutable $createdAt, ?string $avatarPath)
     {
         $this->id = $id;
         $this->username = $username;
@@ -25,6 +26,7 @@ final class User
         $this->points = $points;
         $this->unopenedPacks = $unopenedPacks;
         $this->createdAt = $createdAt;
+        $this->avatarPath = $avatarPath;
     }
 
     public function getId(): int
@@ -60,5 +62,10 @@ final class User
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getAvatarPath(): ?string
+    {
+        return $this->avatarPath;
     }
 }
