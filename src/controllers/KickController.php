@@ -60,7 +60,7 @@ final class KickController extends AppController
 
         $flashTarget = '/login';
         if ($this->currentUser() !== null) {
-            $flashTarget = '/profile';
+            $flashTarget = '/settings/account';
         }
 
         $oauth = Session::consumeKickOAuth();
@@ -105,7 +105,7 @@ final class KickController extends AppController
             $linkedUserId = $this->kickAccountRepository->findUserIdByKickId($kickUser['id']);
 
             if ($linkedUserId === null) {
-                Session::flash('error', 'No StreamRip account is linked to this Kick account. Log in with your email and connect Kick from your profile.');
+                Session::flash('error', 'No StreamRip account is linked to this Kick account. Log in with your email and connect Kick from your account settings.');
                 $this->redirect('/login');
             }
 
@@ -115,7 +115,7 @@ final class KickController extends AppController
 
         if ($oauth['user_id'] === null || $oauth['user_id'] !== $this->currentUser()->getId()) {
             Session::flash('error', 'Kick login failed. Please try again.');
-            $this->redirect('/profile');
+            $this->redirect('/settings/account');
         }
 
         try {
@@ -137,21 +137,6 @@ final class KickController extends AppController
             }
         }
 
-        $this->redirect('/profile');
-    }
-
-    public function unlink(): void
-    {
-        $this->verifyCsrfOrAbort();
-
-        $user = $this->requireLogin();
-
-        $this->kickAccountRepository->unlink($user->getId());
-        $this->logRepository->add('info', 'Kick account unlinked', [
-            'user_id' => $user->getId(),
-        ]);
-        Session::flash('success', 'Kick account disconnected.');
-
-        $this->redirect('/profile');
+        $this->redirect('/settings/account');
     }
 }

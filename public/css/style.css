@@ -809,6 +809,19 @@ main {
   gap: var(--space-md);
 }
 
+.settings-kick {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.settings-kick__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
 .settings-form input[aria-invalid="true"] {
   border-color: var(--color-error);
 }

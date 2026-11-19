@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Database;
+use App\Repository\KickAccountRepository;
 use App\Repository\LogRepository;
 use App\Repository\UserRepository;
 use App\Session;
@@ -79,6 +80,37 @@ final class AccountApiController extends AppController
             'ok' => true,
             'data' => [
                 'changed' => true,
+            ],
+        ]);
+    }
+
+    public function disconnectKick(): void
+    {
+        $user = $this->requireLoginJson();
+        $this->verifyCsrfJson();
+
+        $pdo = (new Database())->connect();
+        $kickAccountRepository = new KickAccountRepository($pdo);
+        $userRepository = new UserRepository($pdo);
+        $logRepository = new LogRepository($pdo);
+
+        if ($kickAccountRepository->findByUserId($user->getId()) === null) {
+            $this->jsonError(409, 'kick_not_connected', 'This account is not connected to Kick.');
+        }
+
+        $passwordHash = $userRepository->findPasswordHashById($user->getId());
+
+        if ($passwordHash === null || $passwordHash === '') {
+            $this->jsonError(409, 'password_required', 'Set a password before disconnecting Kick.');
+        }
+
+        $kickAccountRepository->unlink($user->getId());
+        $logRepository->add('info', 'Kick account disconnected', ['user_id' => $user->getId()], $user->getId());
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => [
+                'connected' => false,
             ],
         ]);
     }

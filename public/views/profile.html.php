@@ -109,36 +109,6 @@
                         <span class="profile-panel__success">Success (+1 pack)</span>
                     </p>
                 </section>
-
-                <?php if ($kickAccount !== null): ?>
-                    <section class="profile-panel" aria-labelledby="kick-heading">
-                        <div class="profile-panel__head">
-                            <h2 class="profile-panel__title" id="kick-heading">
-                                <span class="icon" aria-hidden="true">verified</span>
-                                Kick account
-                            </h2>
-                        </div>
-                        <p class="profile-panel__text">
-                            Connected as <strong><?= htmlspecialchars($kickAccount['kick_username']) ?></strong>.
-                        </p>
-                    </section>
-                <?php else: ?>
-                    <section class="profile-panel" aria-labelledby="kick-heading">
-                        <div class="profile-panel__head">
-                            <h2 class="profile-panel__title" id="kick-heading">
-                                <span class="icon" aria-hidden="true">verified</span>
-                                Kick account
-                            </h2>
-                        </div>
-                        <div class="profile-panel__text">
-                            Not connected. Link your Kick account to log in with Kick.
-                        </div>
-                        <a class="button button--primary" href="/profile/kick/connect">
-                            <span class="icon" aria-hidden="true">link</span>
-                            Connect Kick
-                        </a>
-                    </section>
-                <?php endif; ?>
             </div>
 
             <section class="profile-panel profile-collection" aria-labelledby="collection-heading">

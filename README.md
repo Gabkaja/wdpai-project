@@ -10,14 +10,14 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 | Home | Stream banner, live stats and a card catalog with rarity filters |
 | Card catalog | All cards (`/cards`) and card details (`/cards/{id}`) |
 | Profile | Collection stats, owned cards and pack wallet (requires login); avatar upload and promo code forms have no POST routes yet |
-| Account settings | Change password from `/settings/account` through `POST /api/settings/password` (login, JSON envelope, CSRF on POST) |
+| Account settings | Change password and manage the Kick connection from `/settings/account` (login, JSON envelope, CSRF on POST) |
 | Packs | Buy packs and open them from stock (`/packs`, requires login). Buying and opening are separate transactions; results are stored per user |
 | Pack opening result | Read-only opening view (`/packs/{id}`, owner only) with revealed cards, NEW markers, rarity glow and the opening date |
-| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs` and `/api/packs/history` (login, JSON envelope, CSRF on POST) |
+| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs`, `/api/settings/password`, `/api/settings/kick/disconnect` and `/api/packs/history` (login, JSON envelope, CSRF on POST) |
 | Leaderboard | Podium and the full collector ranking, including packs opened per user |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
-| Kick login | Log in with Kick (OAuth 2.1 + PKCE) and link/unlink Kick account from profile |
+| Kick login | Log in with Kick (OAuth 2.1 + PKCE) and connect or disconnect Kick from account settings |
 | About | Project information and how it works (`/about`) |
 | 404 | Consistent error screen for unknown routes and missing cards |
 
@@ -155,7 +155,6 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 | GET | `/auth/kick/login` | public | `KickController::login` |
 | GET | `/auth/kick/callback` | public | `KickController::callback` |
 | GET | `/profile/kick/connect` | logged in | `KickController::connect` |
-| POST | `/profile/kick/unlink` | logged in | `KickController::unlink` |
 
 ### JSON API
 
@@ -169,6 +168,7 @@ the body is read; POST routes also require the `X-CSRF-Token` header.
 | `POST` | `/api/packs/open` | logged in + CSRF | `PackApiController::open` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 409 `no_unopened_packs`, 422 `validation_failed` / `invalid_quantity`, 500 `internal_error` |
 | `POST` | `/api/settings/packs` | logged in + CSRF | `PackApiController::saveSettings` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
 | `POST` | `/api/settings/password` | logged in + CSRF | `AccountApiController::changePassword` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
+| `POST` | `/api/settings/kick/disconnect` | logged in + CSRF | `AccountApiController::disconnectKick` | 200, 401 `unauthenticated`, 403 `csrf_failed`, 409 `kick_not_connected` / `password_required`, 500 `internal_error` |
 | `GET` | `/api/packs/history?offset=&limit=` | logged in | `PackApiController::history` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
 | `GET` | `/api/collection?rarity=&q=&sort=&offset=` | logged in | `CollectionApiController::collection` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
 
@@ -245,8 +245,8 @@ Kick is used only for logging in and linking to an existing StreamRip account. T
 ### Linking rules
 
 - Login (`purpose=login`): the Kick user id is looked up in `kick_accounts`. If a link exists, the linked StreamRip user is logged in (`Session::login`, which regenerates the session id). If no link exists, the user is shown an error and redirected to `/login`.
-- Link (`purpose=link`): requires the session user to match the user id stored in the OAuth state. A new row is inserted into `kick_accounts`. If the Kick account is already linked to another StreamRip account (unique violation `23505`), an error is shown. On success an `info` entry is written to `system_logs` with the user id.
-- `POST /profile/kick/unlink` (requires login + CSRF) deletes the link and writes an `info` entry to `system_logs`.
+- Link (`purpose=link`): requires the session user to match the user id stored in the OAuth state. A new row is inserted into `kick_accounts`. If the Kick account is already linked to another StreamRip account (unique violation `23505`), an error is shown. On success an `info` entry is written to `system_logs` with the user id. Success and error flashes redirect back to `/settings/account`.
+- `POST /api/settings/kick/disconnect` (requires login + CSRF) deletes the link and writes an `info` entry to `system_logs`. It returns `409 kick_not_connected` when there is no link and `409 password_required` when the account has no password to log in with.
 
 ### Database table
 
@@ -367,6 +367,8 @@ Response envelope:
 | 404 | `not_found` | Unknown `/api/...` route |
 | 409 | `insufficient_points` | Buying costs more than the current balance |
 | 409 | `no_unopened_packs` | Opening more packs than the stock |
+| 409 | `kick_not_connected` | Disconnecting Kick when no link exists |
+| 409 | `password_required` | Disconnecting Kick when the account has no password to log in with |
 | 422 | `validation_failed` | Missing/invalid fields or unknown fields |
 | 422 | `invalid_quantity` | Quantity outside `1..max_purchase_packs` or `1..max_bulk_packs` |
 | 500 | `internal_error` | Uncaught server exception (details go to `system_logs`) |
@@ -531,6 +533,7 @@ Defined in `database/02-views.sql` and extended by `database/06-leaderboard-pack
 | `POST /api/packs/open` | `PackApiController::open` | `PackRepository::openFromStock(int, int)`, `PackRepository::findOpeningsByIds(int, array)`, `UserRepository::findById(int)` | `SELECT unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET unopened_packs = unopened_packs - :count WHERE id = :id`; `INSERT INTO pack_openings (user_id) VALUES (:user_id) RETURNING id`; `INSERT INTO user_cards (user_id, card_id) VALUES (...) ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1 RETURNING quantity`; `INSERT INTO pack_opening_cards (opening_id, slot, card_id, is_new) VALUES (...)`; openings query with `po.user_id = :user_id AND po.id IN (...)`; `SELECT id, username, email, role, points, unopened_packs, created_at FROM users WHERE id = :id` |
 | `POST /api/settings/packs` | `PackApiController::saveSettings` | `UserSettingsRepository::save(int, UserSettings)` | `INSERT INTO user_settings (user_id, reveal_mode, multi_open_mode, sound_enabled, sound_volume, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...` |
 | `POST /api/settings/password` | `AccountApiController::changePassword` | `UserRepository::findPasswordHashById(int)`, `UserRepository::updatePasswordHash(int, string)`, `LogRepository::add()` | `SELECT password_hash FROM users WHERE id = :id`; `UPDATE users SET password_hash = :password_hash WHERE id = :id`; `INSERT INTO system_logs ...` |
+| `POST /api/settings/kick/disconnect` | `AccountApiController::disconnectKick` | `KickAccountRepository::findByUserId(int)`, `UserRepository::findPasswordHashById(int)`, `KickAccountRepository::unlink(int)`, `LogRepository::add()` | `SELECT user_id, kick_user_id, kick_username, linked_at FROM kick_accounts WHERE user_id = :user_id`; `SELECT password_hash FROM users WHERE id = :id`; `DELETE FROM kick_accounts WHERE user_id = :user_id`; `INSERT INTO system_logs ...` |
 | `GET /api/packs/history` | `PackApiController::history` | `PackRepository::historyByUser(int, int, int)` | `SELECT id FROM pack_openings WHERE user_id = :user_id ORDER BY opened_at DESC, id DESC OFFSET :offset LIMIT :limit`; `SELECT ... FROM pack_openings po LEFT JOIN ... WHERE po.user_id = :user_id AND po.id IN (...) ORDER BY po.id, poc.slot` |
 | `POST /admin/users/{id}/points` | `AdminController::grantPoints` | `UserRepository::addPoints(int, int)`, `LogRepository::add()` | `UPDATE users SET points = points + :amount WHERE id = :id`, `INSERT INTO system_logs ...` |
 

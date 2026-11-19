@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Database;
+use App\Repository\KickAccountRepository;
 use App\Repository\UserSettingsRepository;
 
 final class SettingsController extends AppController
@@ -17,10 +18,14 @@ final class SettingsController extends AppController
 
     public function account(): void
     {
-        $this->requireLogin();
+        $user = $this->requireLogin();
+        $pdo = (new Database())->connect();
+        $kickAccount = (new KickAccountRepository($pdo))->findByUserId($user->getId());
+
         $this->render('settings/account', [
             'pageTitle' => 'Account settings – StreamRip',
             'section' => 'account',
+            'kickAccount' => $kickAccount,
         ]);
     }
 

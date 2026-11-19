@@ -53,7 +53,6 @@ $routing->get('/overlay', OverlayController::class, 'index');
 $routing->get('/auth/kick/login', KickController::class, 'login');
 $routing->get('/profile/kick/connect', KickController::class, 'connect');
 $routing->get('/auth/kick/callback', KickController::class, 'callback');
-$routing->post('/profile/kick/unlink', KickController::class, 'unlink');
 $routing->post('/logout', SecurityController::class, 'logout');
 $routing->post('/admin/users/{id}/points', AdminController::class, 'grantPoints');
 $routing->get('/packs/{id}', PackController::class, 'show');
@@ -67,6 +66,7 @@ $routing->post('/api/packs/open', PackApiController::class, 'open');
 $routing->post('/api/settings/packs', PackApiController::class, 'saveSettings');
 $routing->get('/api/settings/packs', PackApiController::class, 'getSettings');
 $routing->post('/api/settings/password', AccountApiController::class, 'changePassword');
+$routing->post('/api/settings/kick/disconnect', AccountApiController::class, 'disconnectKick');
 $routing->get('/api/packs/history', PackApiController::class, 'history');
 $routing->get('/api/collection', CollectionApiController::class, 'collection');
 
