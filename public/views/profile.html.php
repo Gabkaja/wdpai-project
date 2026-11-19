@@ -69,31 +69,6 @@
 
         <div class="profile-layout">
             <div class="profile-sidebar">
-                <section class="profile-panel" aria-labelledby="avatar-heading">
-                    <div class="profile-panel__head">
-                        <h2 class="profile-panel__title" id="avatar-heading">
-                            <span class="icon" aria-hidden="true">account_box</span>
-                            Avatar
-                        </h2>
-                    </div>
-
-                    <div class="avatar-drop">
-                        <span class="avatar-drop__icon">
-                            <span class="icon" aria-hidden="true">person</span>
-                        </span>
-                        <p class="profile-panel__text">No avatar uploaded yet.<br>Supported format: PNG, JPG</p>
-                    </div>
-
-                    <form class="profile-panel__form" method="post" action="/profile/avatar" enctype="multipart/form-data">
-                        <label for="avatar-file">Choose a profile picture</label>
-                        <input type="file" id="avatar-file" name="avatar" accept="image/*" required>
-                        <button class="button button--primary" type="submit">
-                            <span class="icon" aria-hidden="true">upload</span>
-                            Upload avatar
-                        </button>
-                    </form>
-                </section>
-
                 <section class="profile-panel" aria-labelledby="redeem-heading">
                     <div class="profile-panel__head">
                         <h2 class="profile-panel__title" id="redeem-heading">

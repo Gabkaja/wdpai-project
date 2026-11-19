@@ -9,12 +9,12 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 |---|---|
 | Home | Stream banner, live stats and a card catalog with rarity filters |
 | Card catalog | All cards (`/cards`) and card details (`/cards/{id}`) |
-| Profile | Collection stats, owned cards and pack wallet (requires login); avatar upload and promo code forms have no POST routes yet |
+| Profile | Collection stats, owned cards and pack wallet (requires login); the promo code form has no POST route yet |
 | Account settings | Change password, upload or remove an avatar and manage the Kick connection from `/settings/account` (login, JSON envelope, CSRF on POST) |
 | Packs | Buy packs and open them from stock (`/packs`, requires login). Buying and opening are separate transactions; results are stored per user |
 | Pack opening result | Read-only opening view (`/packs/{id}`, owner only) with revealed cards, NEW markers, rarity glow and the opening date |
 | JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs`, `/api/settings/password`, `/api/settings/avatar`, `/api/settings/avatar/delete`, `/api/settings/kick/disconnect` and `/api/packs/history` (login, JSON envelope, CSRF on POST) |
-| Leaderboard | Podium and the full collector ranking, including packs opened per user |
+| Leaderboard | Podium and the full collector ranking with avatars, including packs opened per user |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
 | Kick login | Log in with Kick (OAuth 2.1 + PKCE) and connect or disconnect Kick from account settings |
@@ -180,7 +180,7 @@ the body is read; POST routes also require the `X-CSRF-Token` header.
 
 The project is under active development. Known placeholders:
 
-- **Profile forms** — the avatar upload and promo code forms still render but have no POST routes (`/profile/avatar`, `/profile/redeem`). Packs are bought and opened on `/packs`.
+- **Profile form** — the promo code form still renders but has no POST route (`/profile/redeem`). Avatar upload lives in `/settings/account`. Packs are bought and opened on `/packs`.
 - **Role change in admin panel** — the admin panel lists roles (`viewer`, `admin`) but changing a user's role has no POST route yet.
 - **Shared layout** — views are rendered inside `public/views/layout.html.php`, which includes the `header` and `footer` partials. Views do not call them directly.
 - **Numeric route parameters only** (`\d+`).

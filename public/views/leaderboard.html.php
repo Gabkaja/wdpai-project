@@ -52,7 +52,12 @@
                             </span>
 
                             <div class="podium__header">
-                                <span class="podium__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($player->getUsername(), 0, 1))) ?></span>
+                                <?php $this->partial('avatar', [
+                                    'username' => $player->getUsername(),
+                                    'avatarPath' => $player->getAvatarPath(),
+                                    'avatarUrl' => $this->avatarUrl($player->getAvatarPath()),
+                                    'size' => 'md',
+                                ]); ?>
                                 <div>
                                     <h3 class="podium__name">
                                         <?= htmlspecialchars($player->getUsername()) ?>
@@ -126,7 +131,12 @@
                                 </th>
                                 <td>
                                     <div class="ranking__player">
-                                        <span class="ranking__avatar" aria-hidden="true"><?= htmlspecialchars(strtoupper(substr($player->getUsername(), 0, 1))) ?></span>
+                                        <?php $this->partial('avatar', [
+                                            'username' => $player->getUsername(),
+                                            'avatarPath' => $player->getAvatarPath(),
+                                            'avatarUrl' => $this->avatarUrl($player->getAvatarPath()),
+                                            'size' => 'sm',
+                                        ]); ?>
                                         <div>
                                             <span class="ranking__name">
                                                 <?= htmlspecialchars($player->getUsername()) ?>
