@@ -37,6 +37,21 @@ final class UserSettingsRepository
         );
     }
 
+    public function saveCollectionVisibility(int $userId, string $collectionVisibility): void
+    {
+        $statement = $this->pdo->prepare('
+            INSERT INTO user_settings (user_id, collection_visibility, updated_at)
+            VALUES (:user_id, :collection_visibility, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id) DO UPDATE SET
+                collection_visibility = EXCLUDED.collection_visibility,
+                updated_at = CURRENT_TIMESTAMP
+        ');
+
+        $statement->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $statement->bindValue(':collection_visibility', $collectionVisibility, PDO::PARAM_STR);
+        $statement->execute();
+    }
+
     public function save(int $userId, UserSettings $settings): void
     {
         $statement = $this->pdo->prepare('

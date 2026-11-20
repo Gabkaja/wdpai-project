@@ -65,6 +65,8 @@ $routing->post('/api/packs/buy', PackApiController::class, 'buy');
 $routing->post('/api/packs/open', PackApiController::class, 'open');
 $routing->post('/api/settings/packs', PackApiController::class, 'saveSettings');
 $routing->get('/api/settings/packs', PackApiController::class, 'getSettings');
+$routing->get('/api/settings/privacy', AccountApiController::class, 'getPrivacy');
+$routing->post('/api/settings/privacy', AccountApiController::class, 'savePrivacy');
 $routing->post('/api/settings/password', AccountApiController::class, 'changePassword');
 $routing->post('/api/settings/avatar', AccountApiController::class, 'uploadAvatar');
 $routing->post('/api/settings/avatar/delete', AccountApiController::class, 'deleteAvatar');
