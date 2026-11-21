@@ -815,6 +815,32 @@ main {
   gap: var(--space-md);
 }
 
+.privacy-form__fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.privacy-form__legend {
+  padding: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.privacy-form__profile {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  line-height: var(--line-normal);
+}
+
 .settings-kick {
   display: flex;
   flex-direction: column;
