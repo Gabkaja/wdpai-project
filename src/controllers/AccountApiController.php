@@ -8,6 +8,7 @@ use App\Database;
 use App\Repository\KickAccountRepository;
 use App\Repository\LogRepository;
 use App\Repository\UserRepository;
+use App\Repository\UserSettingsRepository;
 use App\Service\AvatarProcessor;
 use App\Session;
 
@@ -81,6 +82,63 @@ final class AccountApiController extends AppController
             'ok' => true,
             'data' => [
                 'changed' => true,
+            ],
+        ]);
+    }
+
+    public function getPrivacy(): void
+    {
+        $user = $this->requireLoginJson();
+
+        $pdo = (new Database())->connect();
+        $settings = (new UserSettingsRepository($pdo))->find($user->getId());
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => [
+                'collection_visibility' => $settings->getCollectionVisibility(),
+            ],
+        ]);
+    }
+
+    public function savePrivacy(): void
+    {
+        $user = $this->requireLoginJson();
+        $this->verifyCsrfJson();
+
+        $body = $this->jsonBody();
+        $this->rejectUnknownFields($body, ['collection_visibility']);
+
+        $fields = [];
+
+        if (!array_key_exists('collection_visibility', $body)) {
+            $fields['collection_visibility'] = 'This field is required.';
+        } elseif (!is_string($body['collection_visibility']) || !in_array($body['collection_visibility'], ['public', 'private'], true)) {
+            $fields['collection_visibility'] = 'This field must be "public" or "private".';
+        }
+
+        if ($fields !== []) {
+            $this->jsonError(422, 'validation_failed', 'Validation failed.', $fields);
+        }
+
+        $collectionVisibility = $body['collection_visibility'];
+
+        $pdo = (new Database())->connect();
+        $repository = new UserSettingsRepository($pdo);
+        $current = $repository->find($user->getId());
+
+        if ($current->getCollectionVisibility() !== $collectionVisibility) {
+            $repository->saveCollectionVisibility($user->getId(), $collectionVisibility);
+            (new LogRepository($pdo))->add('info', 'Collection visibility changed', [
+                'user_id' => $user->getId(),
+                'collection_visibility' => $collectionVisibility,
+            ], $user->getId());
+        }
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => [
+                'collection_visibility' => $collectionVisibility,
             ],
         ]);
     }

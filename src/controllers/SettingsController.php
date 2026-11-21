@@ -45,10 +45,15 @@ final class SettingsController extends AppController
 
     public function privacy(): void
     {
-        $this->requireLogin();
+        $user = $this->requireLogin();
+        $pdo = (new Database())->connect();
+        $userSettings = (new UserSettingsRepository($pdo))->find($user->getId());
+
         $this->render('settings/privacy', [
             'pageTitle' => 'Privacy settings – StreamRip',
             'section' => 'privacy',
+            'userSettings' => $userSettings,
+            'userId' => $user->getId(),
         ]);
     }
 

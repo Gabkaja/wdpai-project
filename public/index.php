@@ -17,6 +17,7 @@ use App\Controller\PackApiController;
 use App\Controller\AccountApiController;
 use App\Controller\SettingsController;
 use App\Controller\CollectionApiController;
+use App\Controller\UserProfileController;
 use App\Repository\LogRepository;
 use App\Session;
 
@@ -43,6 +44,7 @@ $routing->get('/cards', CardController::class, 'index');
 $routing->get('/cards/{id}', CardController::class, 'show');
 $routing->get('/profile', ProfileController::class, 'index');
 $routing->get('/leaderboard', LeaderboardController::class, 'index');
+$routing->get('/users/{id}', UserProfileController::class, 'show');
 $routing->get('/packs', PackController::class, 'index');
 $routing->get('/login', SecurityController::class, 'login');
 $routing->post('/login', SecurityController::class, 'loginSubmit');
@@ -65,12 +67,15 @@ $routing->post('/api/packs/buy', PackApiController::class, 'buy');
 $routing->post('/api/packs/open', PackApiController::class, 'open');
 $routing->post('/api/settings/packs', PackApiController::class, 'saveSettings');
 $routing->get('/api/settings/packs', PackApiController::class, 'getSettings');
+$routing->get('/api/settings/privacy', AccountApiController::class, 'getPrivacy');
+$routing->post('/api/settings/privacy', AccountApiController::class, 'savePrivacy');
 $routing->post('/api/settings/password', AccountApiController::class, 'changePassword');
 $routing->post('/api/settings/avatar', AccountApiController::class, 'uploadAvatar');
 $routing->post('/api/settings/avatar/delete', AccountApiController::class, 'deleteAvatar');
 $routing->post('/api/settings/kick/disconnect', AccountApiController::class, 'disconnectKick');
 $routing->get('/api/packs/history', PackApiController::class, 'history');
 $routing->get('/api/collection', CollectionApiController::class, 'collection');
+$routing->get('/api/users/{id}/collection', CollectionApiController::class, 'userCollection');
 
 try {
     $routeFound = $routing->dispatch(
