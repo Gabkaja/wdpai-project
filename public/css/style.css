@@ -5617,6 +5617,27 @@ main {
   outline-offset: 2px;
 }
 
+.user-collection__notice {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.user-collection__private {
+  margin: 0;
+  padding: var(--space-xl);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.user-collection .collection__toolbar,
+.user-collection .collection__empty {
+  background: var(--color-surface-container);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .packs__pack-shine,
   .button--loading::after,

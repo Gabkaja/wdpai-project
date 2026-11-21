@@ -1,4 +1,5 @@
 import { api } from '../api.js';
+import { createCollectionItem, readRarityLevels } from '../shared/collection-item.js';
 import { messageFor } from './messages.js';
 import { announce } from './ui.js';
 
@@ -13,15 +14,7 @@ import { announce } from './ui.js';
         return;
     }
 
-    const rarityMap = new Map();
-    const rarityJson = document.querySelector('script[data-rarities]');
-    if (rarityJson) {
-        try {
-            for (const entry of JSON.parse(rarityJson.textContent)) {
-                rarityMap.set(entry.code, entry.level);
-            }
-        } catch (error) {}
-    }
+    const rarityMap = readRarityLevels();
 
     const list = section.querySelector('[data-collection-list]');
     const template = section.querySelector('template[data-template="collection-item"]');
@@ -113,18 +106,7 @@ import { announce } from './ui.js';
     function renderItems(items) {
         const fragment = document.createDocumentFragment();
         for (const item of items) {
-            const clone = document.importNode(template.content, true);
-            const card = clone.querySelector('.collection__card');
-            const chip = clone.querySelector('.collection__chip');
-            const name = clone.querySelector('.collection__name');
-            const quantity = clone.querySelector('.collection__quantity');
-
-            chip.className = `collection__chip rarity-chip rarity-chip--level-${rarityMap.get(item.rarity_code) ?? 1}`;
-            chip.textContent = item.rarity_code.toUpperCase();
-            name.textContent = item.name;
-            quantity.textContent = `×${item.quantity}`;
-
-            fragment.appendChild(card);
+            fragment.appendChild(createCollectionItem(template, item, rarityMap));
         }
         list.appendChild(fragment);
     }

@@ -10,6 +10,7 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 | Home | Stream banner, live stats and a card catalog with rarity filters |
 | Card catalog | All cards (`/cards`) and card details (`/cards/{id}`) |
 | Profile | Collection stats, owned cards and pack wallet (requires login); the promo code form has no POST route yet |
+| Public profile | Player card and, when visible, the collection at `/users/{id}` |
 | Account settings | Change password, upload or remove an avatar and manage the Kick connection from `/settings/account` (login, JSON envelope, CSRF on POST) |
 | Packs | Buy packs and open them from stock (`/packs`, requires login). Buying and opening are separate transactions; results are stored per user |
 | Pack opening result | Read-only opening view (`/packs/{id}`, owner only) with revealed cards, NEW markers, rarity glow and the opening date |
@@ -140,6 +141,7 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 | GET | `/cards/{id}` | public | `CardController::show` |
 | GET | `/profile` | logged in | `ProfileController::index` |
 | GET | `/leaderboard` | public | `LeaderboardController::index` |
+| GET | `/users/{id}` | public | `UserProfileController::show` |
 | GET | `/login` | public | `SecurityController::login` |
 | POST | `/login` | public | `SecurityController::loginSubmit` |
 | GET | `/register` | public | `SecurityController::register` |

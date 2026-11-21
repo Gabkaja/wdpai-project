@@ -11,6 +11,7 @@ use App\Repository\CollectionRepository;
 use App\Repository\RarityRepository;
 use App\Repository\UserRepository;
 use App\Repository\UserSettingsRepository;
+use App\Service\CollectionAccess;
 use PDO;
 
 final class CollectionApiController extends AppController
@@ -43,10 +44,8 @@ final class CollectionApiController extends AppController
 
         $viewer = $this->currentUser();
         $settings = (new UserSettingsRepository($pdo))->find($id);
-        $isOwner = $viewer !== null && $viewer->getId() === $id;
-        $isAdmin = $viewer !== null && $viewer->getRole() === 'admin';
 
-        if ($settings->getCollectionVisibility() !== 'public' && !$isOwner && !$isAdmin) {
+        if (!CollectionAccess::canView($settings->getCollectionVisibility(), $id, $viewer)) {
             $this->jsonError(403, 'forbidden', 'This collection is private.');
         }
 

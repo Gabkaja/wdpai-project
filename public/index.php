@@ -17,6 +17,7 @@ use App\Controller\PackApiController;
 use App\Controller\AccountApiController;
 use App\Controller\SettingsController;
 use App\Controller\CollectionApiController;
+use App\Controller\UserProfileController;
 use App\Repository\LogRepository;
 use App\Session;
 
@@ -43,6 +44,7 @@ $routing->get('/cards', CardController::class, 'index');
 $routing->get('/cards/{id}', CardController::class, 'show');
 $routing->get('/profile', ProfileController::class, 'index');
 $routing->get('/leaderboard', LeaderboardController::class, 'index');
+$routing->get('/users/{id}', UserProfileController::class, 'show');
 $routing->get('/packs', PackController::class, 'index');
 $routing->get('/login', SecurityController::class, 'login');
 $routing->post('/login', SecurityController::class, 'loginSubmit');
