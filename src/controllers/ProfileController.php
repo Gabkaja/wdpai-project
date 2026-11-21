@@ -41,6 +41,7 @@ final class ProfileController extends AppController
             'collection' => $collection,
             'avatarPath' => $user->getAvatarPath(),
             'avatarUrl' => $this->avatarUrl($user->getAvatarPath()),
+            'userId' => $user->getId(),
         ]);
     }
 }

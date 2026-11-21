@@ -64,6 +64,10 @@
                     <span class="icon" aria-hidden="true">settings</span>
                     Settings
                 </a>
+                <a class="button button--secondary" href="/users/<?= (int) $userId ?>">
+                    <span class="icon" aria-hidden="true">person</span>
+                    View public profile
+                </a>
             </div>
         </section>
 

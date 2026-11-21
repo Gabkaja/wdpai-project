@@ -2654,7 +2654,21 @@ main {
   gap: var(--space-3xs);
   color: var(--color-text-strong);
   font-weight: 600;
+  text-decoration: none;
   white-space: nowrap;
+}
+
+.ranking__name:hover {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-decoration-thickness: var(--underline-thickness);
+  text-underline-offset: var(--underline-offset);
+}
+
+.ranking__name:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: var(--focus-ring) solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .ranking__name .icon {

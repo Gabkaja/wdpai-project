@@ -138,10 +138,10 @@
                                             'size' => 'sm',
                                         ]); ?>
                                         <div>
-                                            <span class="ranking__name">
+                                            <a class="ranking__name" href="/users/<?= (int) $player->getUserId() ?>">
                                                 <?= htmlspecialchars($player->getUsername()) ?>
                                                 <span class="icon" aria-hidden="true">verified</span>
-                                            </span>
+                                            </a>
                                             <span class="ranking__sub">Rarest card: <?= htmlspecialchars($player->getRarestCardName() ?? '--') ?></span>
                                         </div>
                                     </div>
