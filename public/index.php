@@ -73,6 +73,7 @@ $routing->post('/api/settings/avatar/delete', AccountApiController::class, 'dele
 $routing->post('/api/settings/kick/disconnect', AccountApiController::class, 'disconnectKick');
 $routing->get('/api/packs/history', PackApiController::class, 'history');
 $routing->get('/api/collection', CollectionApiController::class, 'collection');
+$routing->get('/api/users/{id}/collection', CollectionApiController::class, 'userCollection');
 
 try {
     $routeFound = $routing->dispatch(

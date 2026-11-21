@@ -9,6 +9,9 @@ use App\Model\CollectionItem;
 use App\Model\Rarity;
 use App\Repository\CollectionRepository;
 use App\Repository\RarityRepository;
+use App\Repository\UserRepository;
+use App\Repository\UserSettingsRepository;
+use PDO;
 
 final class CollectionApiController extends AppController
 {
@@ -20,6 +23,47 @@ final class CollectionApiController extends AppController
     {
         $user = $this->requireLoginJson();
 
+        $pdo = (new Database())->connect();
+        $data = $this->collectionData($pdo, $user->getId());
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => $data,
+        ]);
+    }
+
+    public function userCollection(int $id): void
+    {
+        $pdo = (new Database())->connect();
+        $owner = (new UserRepository($pdo))->findById($id);
+
+        if ($owner === null) {
+            $this->jsonError(404, 'not_found', 'User not found.');
+        }
+
+        $viewer = $this->currentUser();
+        $settings = (new UserSettingsRepository($pdo))->find($id);
+        $isOwner = $viewer !== null && $viewer->getId() === $id;
+        $isAdmin = $viewer !== null && $viewer->getRole() === 'admin';
+
+        if ($settings->getCollectionVisibility() !== 'public' && !$isOwner && !$isAdmin) {
+            $this->jsonError(403, 'forbidden', 'This collection is private.');
+        }
+
+        $data = $this->collectionData($pdo, $id);
+        $data['owner'] = [
+            'id' => $owner->getId(),
+            'username' => $owner->getUsername(),
+        ];
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => $data,
+        ]);
+    }
+
+    private function collectionData(PDO $pdo, int $userId): array
+    {
         $fields = [];
 
         $sort = $_GET['sort'] ?? 'rarity';
@@ -49,8 +93,6 @@ final class CollectionApiController extends AppController
             $this->jsonError(422, 'validation_failed', 'Validation failed.', $fields);
         }
 
-        $pdo = (new Database())->connect();
-
         if ($rarity !== null) {
             $rarityCodes = array_map(
                 fn (Rarity $r): string => $r->getCode(),
@@ -67,7 +109,7 @@ final class CollectionApiController extends AppController
         }
 
         $repository = new CollectionRepository($pdo);
-        $rows = $repository->collectionPage($user->getId(), $rarity, $query, $sort, self::LIMIT + 1, $offset);
+        $rows = $repository->collectionPage($userId, $rarity, $query, $sort, self::LIMIT + 1, $offset);
 
         $hasMore = count($rows) > self::LIMIT;
         if ($hasMore) {
@@ -88,16 +130,11 @@ final class CollectionApiController extends AppController
             $rows
         );
 
-        $summary = $repository->collectionSummary($user->getId());
-
-        $this->json(200, [
-            'ok' => true,
-            'data' => [
-                'items' => $items,
-                'has_more' => $hasMore,
-                'next_offset' => $offset + count($items),
-                'summary' => $summary,
-            ],
-        ]);
+        return [
+            'items' => $items,
+            'has_more' => $hasMore,
+            'next_offset' => $offset + count($items),
+            'summary' => $repository->collectionSummary($userId),
+        ];
     }
 }

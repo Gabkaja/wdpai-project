@@ -13,7 +13,7 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 | Account settings | Change password, upload or remove an avatar and manage the Kick connection from `/settings/account` (login, JSON envelope, CSRF on POST) |
 | Packs | Buy packs and open them from stock (`/packs`, requires login). Buying and opening are separate transactions; results are stored per user |
 | Pack opening result | Read-only opening view (`/packs/{id}`, owner only) with revealed cards, NEW markers, rarity glow and the opening date |
-| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs`, `/api/settings/privacy`, `/api/settings/password`, `/api/settings/avatar`, `/api/settings/avatar/delete`, `/api/settings/kick/disconnect` and `/api/packs/history` (login, JSON envelope, CSRF on POST) |
+| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs`, `/api/settings/privacy`, `/api/settings/password`, `/api/settings/avatar`, `/api/settings/avatar/delete`, `/api/settings/kick/disconnect`, `/api/packs/history`, `/api/collection` and `/api/users/{id}/collection` (JSON envelope, CSRF on POST; most routes require login, public collections are readable without one) |
 | Leaderboard | Podium and the full collector ranking with avatars, including packs opened per user |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
@@ -162,8 +162,9 @@ Flow: **nginx → `public/index.php` → `Routing::dispatch()` → controller �
 ### JSON API
 
 Every `/api/...` route answers JSON only (`Cache-Control: no-store`), never redirects,
-and the Post/Redirect/Get rule does not apply. Login is required and checked before
-the body is read; POST routes also require the `X-CSRF-Token` header.
+and the Post/Redirect/Get rule does not apply. Most routes require login, checked
+before the body is read; `GET /api/users/{id}/collection` is public when the target
+collection is public. POST routes also require the `X-CSRF-Token` header.
 
 | Method | Path | Access | Action | Status codes |
 |---|---|---|---|---|
@@ -178,6 +179,12 @@ the body is read; POST routes also require the `X-CSRF-Token` header.
 | `POST` | `/api/settings/kick/disconnect` | logged in + CSRF | `AccountApiController::disconnectKick` | 200, 401 `unauthenticated`, 403 `csrf_failed`, 409 `kick_not_connected` / `password_required`, 500 `internal_error` |
 | `GET` | `/api/packs/history?offset=&limit=` | logged in | `PackApiController::history` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
 | `GET` | `/api/collection?rarity=&q=&sort=&offset=` | logged in | `CollectionApiController::collection` | 200, 401 `unauthenticated`, 422 `validation_failed`, 500 `internal_error` |
+| `GET` | `/api/users/{id}/collection?rarity=&q=&sort=&offset=` | public collection, or owner/admin when private | `CollectionApiController::userCollection` | 200, 403 `forbidden`, 404 `not_found`, 422 `validation_failed`, 500 `internal_error` |
+
+`GET /api/users/{id}/collection` returns the same payload as `/api/collection` plus
+`data.owner` (`id`, `username`). Access checks run in order: missing user `404`,
+private collection `403`, then filter validation `422`. Private collections are
+visible to the owner and admins; public collections need no session.
 
 ## Project status
 
@@ -341,9 +348,9 @@ Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsR
 | `multi_open_mode` | `queue`, `all_at_once` | `queue` | Queue reveals one pack at a time; all-at-once builds every pack on one stage |
 | `sound_enabled` | boolean | `true` | Passed to the sound module |
 | `sound_volume` | `0..100` | `70` | Passed to the sound module |
-| `collection_visibility` | `public`, `private` | `public` | Controls whether other users can see the card list on `/users/{id}` |
+| `collection_visibility` | `public`, `private` | `public` | Controls whether other users can see the card list on `/users/{id}` and `/api/users/{id}/collection` |
 
-The pack opening values are managed on the pack opening settings page (`/settings/packs`) and saved through `POST /api/settings/packs`; the opening flow reads them via `GET /api/settings/packs` at the start of `/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored. The `collection_visibility` value is available through `GET` and `POST /api/settings/privacy`; the privacy settings UI is not wired yet.
+The pack opening values are managed on the pack opening settings page (`/settings/packs`) and saved through `POST /api/settings/packs`; the opening flow reads them via `GET /api/settings/packs` at the start of `/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored. The `collection_visibility` value is managed on `/settings/privacy` through `GET` and `POST /api/settings/privacy`, and is enforced by `GET /api/users/{id}/collection`.
 
 The `collection_visibility` column is added by `database/10-privacy.sql`. A fresh database volume applies it automatically; an existing database needs the migration run manually:
 
@@ -560,6 +567,7 @@ Defined in `database/02-views.sql` and extended by `database/06-leaderboard-pack
 | `POST /api/settings/avatar/delete` | `AccountApiController::deleteAvatar` | `UserRepository::updateAvatarPath(int, ?string)`, `LogRepository::add()` | `UPDATE users SET avatar_path = :avatar_path WHERE id = :id`; `INSERT INTO system_logs ...` |
 | `POST /api/settings/kick/disconnect` | `AccountApiController::disconnectKick` | `KickAccountRepository::findByUserId(int)`, `UserRepository::findPasswordHashById(int)`, `KickAccountRepository::unlink(int)`, `LogRepository::add()` | `SELECT user_id, kick_user_id, kick_username, linked_at FROM kick_accounts WHERE user_id = :user_id`; `SELECT password_hash FROM users WHERE id = :id`; `DELETE FROM kick_accounts WHERE user_id = :user_id`; `INSERT INTO system_logs ...` |
 | `GET /api/packs/history` | `PackApiController::history` | `PackRepository::historyByUser(int, int, int)` | `SELECT id FROM pack_openings WHERE user_id = :user_id ORDER BY opened_at DESC, id DESC OFFSET :offset LIMIT :limit`; `SELECT ... FROM pack_openings po LEFT JOIN ... WHERE po.user_id = :user_id AND po.id IN (...) ORDER BY po.id, poc.slot` |
+| `GET /api/users/{id}/collection` | `CollectionApiController::userCollection` | `UserRepository::findById(int)`, `UserSettingsRepository::find(int)`, `CollectionRepository::collectionPage(...)`, `CollectionRepository::collectionSummary(int)`, `RarityRepository::all()` | `SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users WHERE id = :id`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility FROM user_settings WHERE user_id = :user_id`; collection page query with `uc.user_id = :user_id`; summary queries; rarity query |
 | `POST /admin/users/{id}/points` | `AdminController::grantPoints` | `UserRepository::addPoints(int, int)`, `LogRepository::add()` | `UPDATE users SET points = points + :amount WHERE id = :id`, `INSERT INTO system_logs ...` |
 
 ### Configuration
