@@ -80,7 +80,7 @@ services:
     restart: unless-stopped
     command:
       - "http"
-      - "--domain=${NGROK_DOMAIN}"
+      - "--url=${NGROK_DOMAIN}"
       - "server:80"
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
