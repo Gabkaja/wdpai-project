@@ -138,7 +138,8 @@ final class PackApiController extends AppController
             $body['multi_open_mode'],
             $body['sound_enabled'],
             $body['sound_volume'],
-            $current->getCollectionVisibility()
+            $current->getCollectionVisibility(),
+            $current->isLiteMode()
         );
 
         $repository->save($user->getId(), $settings);
