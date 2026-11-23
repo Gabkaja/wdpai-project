@@ -16,6 +16,7 @@ bez frameworka: własny router, kontrolery i widoki `.html.php`.
 | Autoload | Composer (PSR-4) |
 | Konteneryzacja | Docker Compose |
 | Baza danych | PostgreSQL (PDO, `pdo_pgsql`) |
+| Tunel publiczny | ngrok (opcjonalnie, statyczna domena) |
 
 ## Uruchomienie
 
@@ -30,6 +31,25 @@ Po zmianach w `composer.json` lub strukturze namespace:
 ```bash
 docker compose exec php composer dump-autoload
 ```
+
+## Ngrok i wystawienie publiczne
+
+- Usługa `ngrok` w `docker-compose.yaml` tuneluje `server:80` na statyczną domenę z
+  `NGROK_DOMAIN`. Uruchamia się ją przez `docker compose up -d ngrok`.
+- Polecenie agenta to `["http", "--url=${NGROK_DOMAIN}", "server:80"]`; `--domain`
+  jest przestarzałe. `NGROK_AUTHTOKEN` i `NGROK_DOMAIN` czyta wyłącznie usługa
+  `ngrok`, nie kontener `php`.
+- Token i domena żyją tylko w `.env`. Token nieprawidłowy/obcięty powoduje pętlę
+  restartów (`ERR_NGROK_105`); domena musi być zarezerwowana na koncie ngrok
+  (**Domains**), inaczej tunel nie wstanie. Darmowy plan pokazuje przeglądarce
+  stronę ostrzegawczą ngroka.
+- Nie dodawaj Basic Auth na poziomie tunelu — autoryzację `/admin` realizują sesje i
+  role aplikacji.
+- Przy publicznym wystawieniu obowiązuje: `APP_ENV=production` i `APP_DEBUG=false`
+  (brak wyjścia debugowania), porty PostgreSQL (`5432`) i Mailpita (`8025`, `1025`)
+  zbindowane do `127.0.0.1`, a Nginx blokuje ukryte pliki
+  (`location ~ /\.(?!well-known).* { deny all; }`), żeby nie dało się pobrać `.env`
+  ani `.git`.
 
 ## Struktura
 

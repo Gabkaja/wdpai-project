@@ -31,6 +31,7 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 | Autoload | Composer (PSR-4) |
 | Containerization | Docker Compose |
 | Database | PostgreSQL (PDO, pdo_pgsql) |
+| Public tunnel | ngrok (optional, exposes the app on a static domain) |
 
 ## Quick start
 
@@ -39,6 +40,8 @@ Docker with Docker Compose is required. Create a `.env` file in the project root
 
 ```dotenv
 APP_PORT=8080
+APP_ENV=production
+APP_DEBUG=false
 POSTGRES_PORT=5433
 POSTGRES_DB=streamrip
 POSTGRES_USER=streamrip
@@ -51,6 +54,8 @@ PGADMIN_DEFAULT_PASSWORD=change-me
 KICK_CLIENT_ID=your-kick-client-id
 KICK_CLIENT_SECRET=your-kick-client-secret
 KICK_REDIRECT_URI=http://localhost:8080/auth/kick/callback
+NGROK_AUTHTOKEN=your-ngrok-authtoken
+NGROK_DOMAIN=your-static-domain.ngrok-free.dev
 ```
 
 Then:
@@ -60,6 +65,38 @@ docker compose up --build -d
 ```
 
 Application: http://localhost:8080 (port follows `APP_PORT`).
+
+### Public access via ngrok
+
+The `ngrok` service in `docker-compose.yaml` tunnels `server:80` to a static
+ngrok domain, so the app can be reached from the internet. Set `NGROK_AUTHTOKEN`
+and `NGROK_DOMAIN` in `.env`, then start it with:
+
+```bash
+docker compose up -d ngrok
+```
+
+Setup notes:
+
+- Copy the authtoken from https://dashboard.ngrok.com/get-started/your-authtoken; a
+  truncated or invalid token makes the container restart in a loop (`ERR_NGROK_105`).
+- Reserve the static domain under **Domains** in the ngrok dashboard (the free plan
+  includes one). A domain not claimed by your account will not start.
+- The agent uses `--url=${NGROK_DOMAIN}` (`--domain` is deprecated). Free-plan browser
+  traffic shows ngrok's "You are about to visit…" interstitial; removing it requires a
+  paid plan.
+- `NGROK_AUTHTOKEN` and `NGROK_DOMAIN` are not passed to the PHP container; only the
+  `ngrok` service reads them.
+
+Exposing the app publicly is paired with these safeguards:
+
+- `APP_ENV=production` and `APP_DEBUG=false` keep debug output off.
+- PostgreSQL (`5432`) and Mailpit (`8025`, `1025`) are bound to `127.0.0.1` only, so
+  they are not reachable from the local/academic network or the tunnel.
+- Nginx denies hidden files (`location ~ /\.(?!well-known).* { deny all; }`), so `.env`
+  and `.git` cannot be downloaded.
+- Authorization to `/admin` is handled by application sessions and roles; no Basic Auth
+  is added at the tunnel level.
 
 Before using Kick login, register a Kick app at https://kick.com/settings/developer and set the redirect URI to `http://localhost:8080/auth/kick/callback` (or your deployment URL). Copy the app's client ID, client secret and redirect URI into `.env` as `KICK_CLIENT_ID`, `KICK_CLIENT_SECRET` and `KICK_REDIRECT_URI`.
 
@@ -579,6 +616,13 @@ Database connection parameters are passed exclusively through environment variab
 - `.env` defines `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (and `POSTGRES_PORT` for the host mapping).
 - The `php` service in `docker-compose.yaml` maps them to `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and adds `DB_HOST: db` and `DB_PORT: 5432` (the internal container port).
 - `App\Database::connect()` reads all five via `getenv()` and builds the PDO DSN `pgsql:host=%s;port=%d;dbname=%s`.
+
+Other environment variables in `.env`:
+
+- `APP_ENV` and `APP_DEBUG` — set `APP_ENV=production` and `APP_DEBUG=false` for any
+  public deployment so PHP never prints errors to the response.
+- `NGROK_AUTHTOKEN` and `NGROK_DOMAIN` — read only by the `ngrok` service; see
+  [Public access via ngrok](#public-access-via-ngrok).
 
 ### Seed data and database reset
 
