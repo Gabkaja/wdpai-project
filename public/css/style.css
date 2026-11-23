@@ -6140,3 +6140,70 @@ main {
 .packs__stage-flash--active {
   opacity: 0.45;
 }
+
+.is-lite {
+  --glow-brand: none;
+  --glow-brand-strong: none;
+  --glow-brand-soft: none;
+  --shadow-header: none;
+  --shadow-banner: none;
+  --shadow-card: none;
+  --shadow-input: none;
+  --shadow-accent-20: none;
+  --shadow-accent-25: none;
+  --shadow-accent-30: none;
+  --shadow-accent-35: none;
+  --shadow-accent-50: none;
+  --shadow-pulse: none;
+  --shadow-inset-15: none;
+  --shadow-inset-30: none;
+  scroll-behavior: auto;
+}
+
+.is-lite .rarity-common,
+.is-lite .rarity-rare,
+.is-lite .rarity-epic,
+.is-lite .rarity-legendary {
+  --rarity-icon-glow: none;
+  --rarity-dot-glow: none;
+  --rarity-badge-glow: none;
+  --rarity-card-shadow: none;
+}
+
+.is-lite *,
+.is-lite *::before,
+.is-lite *::after {
+  animation: none !important;
+  transition: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+
+.is-lite .card,
+.is-lite .card__icon,
+.is-lite .rarity-badge,
+.is-lite .collection-card,
+.is-lite .collection-card__icon,
+.is-lite .card-detail__media,
+.is-lite .card-detail__icon,
+.is-lite .card-detail__rarity,
+.is-lite .card-detail__stat .progress__bar,
+.is-lite .progress__bar,
+.is-lite .podium__card,
+.is-lite .rarity-chip--level-5,
+.is-lite .pack-card__face--front {
+  box-shadow: none !important;
+}
+
+.is-lite .card.rarity-common,
+.is-lite .card.rarity-rare,
+.is-lite .card.rarity-epic,
+.is-lite .card.rarity-legendary,
+.is-lite .collection-card.rarity-common,
+.is-lite .collection-card.rarity-rare,
+.is-lite .collection-card.rarity-epic,
+.is-lite .collection-card.rarity-legendary,
+.is-lite .card-detail__media {
+  border: 2px solid var(--rarity);
+}
