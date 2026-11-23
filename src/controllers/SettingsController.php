@@ -59,10 +59,14 @@ final class SettingsController extends AppController
 
     public function performance(): void
     {
-        $this->requireLogin();
+        $user = $this->requireLogin();
+        $pdo = (new Database())->connect();
+        $userSettings = (new UserSettingsRepository($pdo))->find($user->getId());
+
         $this->render('settings/performance', [
             'pageTitle' => 'Performance settings – StreamRip',
             'section' => 'performance',
+            'userSettings' => $userSettings,
         ]);
     }
 }
