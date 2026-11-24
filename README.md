@@ -118,6 +118,9 @@ public/js/api.js              # Fetch API client: CSRF header, timeout, JSON env
 public/js/theme.js            # light/dark theme toggle and password visibility helper
 public/js/sound.js            # Web Audio hook (currently a placeholder: configure/play are no-ops)
 public/js/packs/              # packs page modules: index, state, buy, open, settings, history, stage, ui, messages
+public/js/settings/           # settings page modules: account, packs, privacy, performance, password, avatar, kick
+public/js/ui/                 # shared UI helpers: index, dropdown, nav-toggle, responsive-details, lite mode detection
+public/js/users/              # public user profile modules: collection
 public/views/*.html.php       # views (content fragments inserted into the layout)
 public/views/layout.html.php  # shared layout (header, content, footer)
 public/views/partials/*.php   # partials: header, footer, card-list
@@ -409,7 +412,7 @@ Get-Content database\10-privacy.sql | docker compose exec -T db sh -c 'psql -U $
 Get-Content database\11-lite-mode.sql | docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
 ```
 
-With `prefers-reduced-motion: reduce`, the CSS disables the reveal/tear transitions and burst animations; in auto mode the stage reveals the remaining cards immediately instead of animating them.
+With `prefers-reduced-motion: reduce` or lite mode, the CSS disables the reveal/tear transitions and burst animations; in auto mode the stage reveals the remaining cards immediately instead of animating them. Lite mode adds the `is-lite` class to `<html>`, which turns off glows, blur, animations and transitions and replaces rarity glows with 2px rarity-coloured borders. It also shrinks server-side page sizes: collections return 12 items instead of 24 for the logged-in viewer, and the pack history uses 12 instead of 10 both on the initial render and on `Load more`.
 
 ### Fetch API and JSON API
 
