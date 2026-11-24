@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { messageFor } from './messages.js';
 import { showMessage, announce } from './ui.js';
+import { isLite } from '../ui/lite.js';
 
 const section = document.querySelector('#history-details');
 const list = section ? section.querySelector('ol[data-history-list]') : null;
@@ -142,9 +143,10 @@ if (list && loadMore && template) {
         loadMore.setAttribute('aria-busy', 'true');
 
         const offset = parseInt(loadMore.dataset.nextOffset, 10) || 0;
+        const limit = isLite() ? 12 : 10;
 
         try {
-            const data = await api.get(`/api/packs/history?offset=${offset}&limit=10`);
+            const data = await api.get(`/api/packs/history?offset=${offset}&limit=${limit}`);
             appendOpenings(data.items);
             loadMore.dataset.nextOffset = String(data.next_offset);
             if (data.has_more === false) {

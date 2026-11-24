@@ -841,6 +841,75 @@ main {
   line-height: var(--line-normal);
 }
 
+.performance-form__fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.performance-form__legend {
+  padding: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.performance-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container);
+}
+
+.performance-switch:has(.performance-switch__input:checked) {
+  border-color: var(--color-brand);
+}
+
+.performance-switch__input {
+  flex-shrink: 0;
+  width: var(--size-control-md);
+  height: var(--size-control-md);
+  margin: 0;
+  accent-color: var(--color-brand);
+}
+
+.performance-switch__input:focus-visible {
+  outline: var(--focus-ring) solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.performance-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+}
+
+.performance-switch__title {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: var(--line-snug);
+  cursor: pointer;
+}
+
+.performance-switch__desc {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  line-height: var(--line-normal);
+}
+
 .settings-kick {
   display: flex;
   flex-direction: column;
@@ -6139,4 +6208,71 @@ main {
 
 .packs__stage-flash--active {
   opacity: 0.45;
+}
+
+.is-lite {
+  --glow-brand: none;
+  --glow-brand-strong: none;
+  --glow-brand-soft: none;
+  --shadow-header: none;
+  --shadow-banner: none;
+  --shadow-card: none;
+  --shadow-input: none;
+  --shadow-accent-20: none;
+  --shadow-accent-25: none;
+  --shadow-accent-30: none;
+  --shadow-accent-35: none;
+  --shadow-accent-50: none;
+  --shadow-pulse: none;
+  --shadow-inset-15: none;
+  --shadow-inset-30: none;
+  scroll-behavior: auto;
+}
+
+.is-lite .rarity-common,
+.is-lite .rarity-rare,
+.is-lite .rarity-epic,
+.is-lite .rarity-legendary {
+  --rarity-icon-glow: none;
+  --rarity-dot-glow: none;
+  --rarity-badge-glow: none;
+  --rarity-card-shadow: none;
+}
+
+.is-lite *,
+.is-lite *::before,
+.is-lite *::after {
+  animation: none !important;
+  transition: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+
+.is-lite .card,
+.is-lite .card__icon,
+.is-lite .rarity-badge,
+.is-lite .collection-card,
+.is-lite .collection-card__icon,
+.is-lite .card-detail__media,
+.is-lite .card-detail__icon,
+.is-lite .card-detail__rarity,
+.is-lite .card-detail__stat .progress__bar,
+.is-lite .progress__bar,
+.is-lite .podium__card,
+.is-lite .rarity-chip--level-5,
+.is-lite .pack-card__face--front {
+  box-shadow: none !important;
+}
+
+.is-lite .card.rarity-common,
+.is-lite .card.rarity-rare,
+.is-lite .card.rarity-epic,
+.is-lite .card.rarity-legendary,
+.is-lite .collection-card.rarity-common,
+.is-lite .collection-card.rarity-rare,
+.is-lite .collection-card.rarity-epic,
+.is-lite .collection-card.rarity-legendary,
+.is-lite .card-detail__media {
+  border: 2px solid var(--rarity);
 }

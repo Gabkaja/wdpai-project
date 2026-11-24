@@ -143,6 +143,63 @@ final class AccountApiController extends AppController
         ]);
     }
 
+    public function getPerformance(): void
+    {
+        $user = $this->requireLoginJson();
+
+        $pdo = (new Database())->connect();
+        $settings = (new UserSettingsRepository($pdo))->find($user->getId());
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => [
+                'lite_mode' => $settings->isLiteMode(),
+            ],
+        ]);
+    }
+
+    public function savePerformance(): void
+    {
+        $user = $this->requireLoginJson();
+        $this->verifyCsrfJson();
+
+        $body = $this->jsonBody();
+        $this->rejectUnknownFields($body, ['lite_mode']);
+
+        $fields = [];
+
+        if (!array_key_exists('lite_mode', $body)) {
+            $fields['lite_mode'] = 'This field is required.';
+        } elseif (!is_bool($body['lite_mode'])) {
+            $fields['lite_mode'] = 'This field must be a boolean.';
+        }
+
+        if ($fields !== []) {
+            $this->jsonError(422, 'validation_failed', 'Validation failed.', $fields);
+        }
+
+        $liteMode = $body['lite_mode'];
+
+        $pdo = (new Database())->connect();
+        $repository = new UserSettingsRepository($pdo);
+        $current = $repository->find($user->getId());
+
+        if ($current->isLiteMode() !== $liteMode) {
+            $repository->saveLiteMode($user->getId(), $liteMode);
+            (new LogRepository($pdo))->add('info', 'Lite mode changed', [
+                'user_id' => $user->getId(),
+                'lite_mode' => $liteMode,
+            ], $user->getId());
+        }
+
+        $this->json(200, [
+            'ok' => true,
+            'data' => [
+                'lite_mode' => $liteMode,
+            ],
+        ]);
+    }
+
     public function disconnectKick(): void
     {
         $user = $this->requireLoginJson();

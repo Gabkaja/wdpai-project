@@ -18,6 +18,8 @@ final class CollectionApiController extends AppController
 {
     private const LIMIT = 24;
 
+    private const LITE_LIMIT = 12;
+
     private const ALLOWED_SORTS = ['rarity', 'name', 'quantity', 'recent'];
 
     public function collection(): void
@@ -25,7 +27,8 @@ final class CollectionApiController extends AppController
         $user = $this->requireLoginJson();
 
         $pdo = (new Database())->connect();
-        $data = $this->collectionData($pdo, $user->getId());
+        $limit = $this->pageLimit($pdo, $user->getId());
+        $data = $this->collectionData($pdo, $user->getId(), $limit);
 
         $this->json(200, [
             'ok' => true,
@@ -49,7 +52,8 @@ final class CollectionApiController extends AppController
             $this->jsonError(403, 'forbidden', 'This collection is private.');
         }
 
-        $data = $this->collectionData($pdo, $id);
+        $limit = $viewer === null ? self::LIMIT : $this->pageLimit($pdo, $viewer->getId());
+        $data = $this->collectionData($pdo, $id, $limit);
         $data['owner'] = [
             'id' => $owner->getId(),
             'username' => $owner->getUsername(),
@@ -61,7 +65,14 @@ final class CollectionApiController extends AppController
         ]);
     }
 
-    private function collectionData(PDO $pdo, int $userId): array
+    private function pageLimit(PDO $pdo, int $userId): int
+    {
+        $settings = (new UserSettingsRepository($pdo))->find($userId);
+
+        return $settings->isLiteMode() ? self::LITE_LIMIT : self::LIMIT;
+    }
+
+    private function collectionData(PDO $pdo, int $userId, int $limit): array
     {
         $fields = [];
 
@@ -108,9 +119,9 @@ final class CollectionApiController extends AppController
         }
 
         $repository = new CollectionRepository($pdo);
-        $rows = $repository->collectionPage($userId, $rarity, $query, $sort, self::LIMIT + 1, $offset);
+        $rows = $repository->collectionPage($userId, $rarity, $query, $sort, $limit + 1, $offset);
 
-        $hasMore = count($rows) > self::LIMIT;
+        $hasMore = count($rows) > $limit;
         if ($hasMore) {
             array_pop($rows);
         }

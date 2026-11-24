@@ -1,5 +1,6 @@
 import { play } from '../sound.js';
 import { announce } from './ui.js';
+import { prefersReducedEffects } from '../ui/lite.js';
 
 const TIME = {
     tear: 700,
@@ -21,9 +22,6 @@ if (rarityJson) {
         }
     } catch (error) {}
 }
-
-let reducedMotion = false;
-const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 let activeTrigger = null;
 let openings = [];
@@ -57,16 +55,11 @@ function removeListeners() {
 function cleanup() {
     clearTimers();
     removeListeners();
-    mq.removeEventListener('change', onReducedMotionChange);
 }
 
 window.addEventListener('pagehide', () => {
     cleanup();
 });
-
-function onReducedMotionChange() {
-    reducedMotion = mq.matches;
-}
 
 function cardLevel(card) {
     return rarityLevels[card.rarity_code] ?? 1;
@@ -274,7 +267,7 @@ function autoFlip(cardBtns, fromIdx, onComplete) {
         }
         flipCard(cardBtns[i]);
         i++;
-        const interval = reducedMotion ? 0 : TIME.flip;
+        const interval = prefersReducedEffects() ? 0 : TIME.flip;
         const t = setTimeout(step, interval);
         trackTimer(t);
     }
@@ -295,7 +288,7 @@ function createSeal(openingIndex) {
 function tearSeal(sealBtn, onTorn) {
     play('tear');
     sealBtn.classList.add('pack-seal--tearing');
-    const duration = reducedMotion ? 0 : TIME.tear;
+    const duration = prefersReducedEffects() ? 0 : TIME.tear;
     const t = setTimeout(() => {
         sealBtn.hidden = true;
         onTorn();
@@ -450,9 +443,6 @@ export function show(openingsIn, settingsIn) {
     packStates = [];
     activeTrigger = document.activeElement;
 
-    trackListener(mq, 'change', onReducedMotionChange);
-    reducedMotion = mq.matches;
-
     if (stage) {
         stage.setAttribute('role', 'region');
         stage.setAttribute('aria-label', 'Pack opening');
@@ -531,7 +521,7 @@ function wireQueuePack(state, wrapper) {
         tearSeal(state.seal, () => {
             state.cardsWrap.hidden = false;
             if (auto) {
-                if (reducedMotion) {
+                if (prefersReducedEffects()) {
                     flipAllRemaining(state.cardBtns, 0);
                     onPackDone();
                 } else {
@@ -544,7 +534,7 @@ function wireQueuePack(state, wrapper) {
     }
 
     if (auto) {
-        const t = setTimeout(() => doTear(), reducedMotion ? 0 : TIME.tear);
+        const t = setTimeout(() => doTear(), prefersReducedEffects() ? 0 : TIME.tear);
         trackTimer(t);
     } else {
         trackListener(state.seal, 'click', doTear);
@@ -563,7 +553,7 @@ function wireQueuePack(state, wrapper) {
         state.seal.hidden = true;
         state.cardsWrap.hidden = false;
         flipAllRemaining(state.cardBtns, 0);
-        const t = setTimeout(() => onPackDone(), reducedMotion ? 0 : 100);
+        const t = setTimeout(() => onPackDone(), prefersReducedEffects() ? 0 : 100);
         trackTimer(t);
     });
 
@@ -647,7 +637,7 @@ function wireAllPacks(auto, wrapper) {
         tearSeal(state.seal, () => {
             state.cardsWrap.hidden = false;
             if (auto) {
-                if (reducedMotion) {
+                if (prefersReducedEffects()) {
                     flipAllRemaining(state.cardBtns, 0);
                     active++;
                     tearNext();
@@ -679,7 +669,7 @@ function wireAllPacks(auto, wrapper) {
             if (allComplete()) {
                 showSummary();
             }
-        }, reducedMotion ? 0 : 100);
+        }, prefersReducedEffects() ? 0 : 100);
         trackTimer(t);
     });
 

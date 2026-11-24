@@ -7,10 +7,13 @@ namespace App\Controller;
 use App\Database;
 use App\Model\User;
 use App\Repository\UserRepository;
+use App\Repository\UserSettingsRepository;
 use App\Session;
 
 abstract class AppController
 {
+    private static ?bool $resolvedLiteMode = null;
+
     protected function currentUser(): ?User
     {
         $userId = Session::userId();
@@ -160,10 +163,38 @@ abstract class AppController
         }
     }
 
+    private function liteMode(): bool
+    {
+        if (self::$resolvedLiteMode !== null) {
+            return self::$resolvedLiteMode;
+        }
+
+        $userId = Session::userId();
+
+        if ($userId === null) {
+            self::$resolvedLiteMode = false;
+
+            return self::$resolvedLiteMode;
+        }
+
+        try {
+            $pdo = (new Database())->connect();
+            self::$resolvedLiteMode = (new UserSettingsRepository($pdo))->find($userId)->isLiteMode();
+        } catch (\Throwable) {
+            self::$resolvedLiteMode = false;
+        }
+
+        return self::$resolvedLiteMode;
+    }
+
     protected function render(string $template, array $variables = [], ?string $layout = 'layout'): void
     {
         if ($layout !== null && !isset($variables['currentUser'])) {
             $variables['currentUser'] = $this->currentUser();
+        }
+
+        if ($layout !== null && !isset($variables['liteMode'])) {
+            $variables['liteMode'] = $this->liteMode();
         }
 
         if ($layout !== null && !isset($variables['flash'])) {

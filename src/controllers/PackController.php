@@ -25,7 +25,8 @@ final class PackController extends AppController
         $packSettings = $packRepository->settings();
         $userSettings = $userSettingsRepository->find($user->getId());
         $rarities = $rarityRepository->odds();
-        $history = $packRepository->historyByUser($user->getId(), 0, 10);
+        $historyLimit = $userSettings->isLiteMode() ? 12 : 10;
+        $history = $packRepository->historyByUser($user->getId(), 0, $historyLimit);
 
         $this->render('packs', [
             'pageTitle' => 'Packs – StreamRip',

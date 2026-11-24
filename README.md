@@ -14,7 +14,7 @@ live broadcast, and viewers build their collection and compete on the leaderboar
 | Account settings | Change password, upload or remove an avatar and manage the Kick connection from `/settings/account` (login, JSON envelope, CSRF on POST) |
 | Packs | Buy packs and open them from stock (`/packs`, requires login). Buying and opening are separate transactions; results are stored per user |
 | Pack opening result | Read-only opening view (`/packs/{id}`, owner only) with revealed cards, NEW markers, rarity glow and the opening date |
-| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs`, `/api/settings/privacy`, `/api/settings/password`, `/api/settings/avatar`, `/api/settings/avatar/delete`, `/api/settings/kick/disconnect`, `/api/packs/history`, `/api/collection` and `/api/users/{id}/collection` (JSON envelope, CSRF on POST; most routes require login, public collections are readable without one) |
+| JSON API | `/api/packs/buy`, `/api/packs/open`, `/api/settings/packs`, `/api/settings/privacy`, `/api/settings/performance`, `/api/settings/password`, `/api/settings/avatar`, `/api/settings/avatar/delete`, `/api/settings/kick/disconnect`, `/api/packs/history`, `/api/collection` and `/api/users/{id}/collection` (JSON envelope, CSRF on POST; most routes require login, public collections are readable without one) |
 | Leaderboard | Podium and the full collector ranking with avatars, including packs opened per user |
 | Admin panel | Card list, users and roles, system logs, cleanup schedule (requires `admin` role) |
 | Login / register | Login and registration with backend (POST `/login`, POST `/register`), CSRF-protected |
@@ -118,6 +118,9 @@ public/js/api.js              # Fetch API client: CSRF header, timeout, JSON env
 public/js/theme.js            # light/dark theme toggle and password visibility helper
 public/js/sound.js            # Web Audio hook (currently a placeholder: configure/play are no-ops)
 public/js/packs/              # packs page modules: index, state, buy, open, settings, history, stage, ui, messages
+public/js/settings/           # settings page modules: account, packs, privacy, performance, password, avatar, kick
+public/js/ui/                 # shared UI helpers: index, dropdown, nav-toggle, responsive-details, lite mode detection
+public/js/users/              # public user profile modules: collection
 public/views/*.html.php       # views (content fragments inserted into the layout)
 public/views/layout.html.php  # shared layout (header, content, footer)
 public/views/partials/*.php   # partials: header, footer, card-list
@@ -142,6 +145,7 @@ database/07-pack-stock-and-settings.sql # users.unopened_packs, pack_purchases, 
 database/08-pack-purchase-limit.sql    # pack_settings.max_purchase_packs
 database/09-avatar.sql                 # users.avatar_path
 database/10-privacy.sql                # user_settings.collection_visibility
+database/11-lite-mode.sql              # user_settings.lite_mode
 docker/                       # nginx, php and db configuration
 ```
 
@@ -212,6 +216,8 @@ collection is public. POST routes also require the `X-CSRF-Token` header.
 | `POST` | `/api/settings/packs` | logged in + CSRF | `PackApiController::saveSettings` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
 | `GET` | `/api/settings/privacy` | logged in | `AccountApiController::getPrivacy` | 200, 401 `unauthenticated`, 500 `internal_error` |
 | `POST` | `/api/settings/privacy` | logged in + CSRF | `AccountApiController::savePrivacy` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
+| `GET` | `/api/settings/performance` | logged in | `AccountApiController::getPerformance` | 200, 401 `unauthenticated`, 500 `internal_error` |
+| `POST` | `/api/settings/performance` | logged in + CSRF | `AccountApiController::savePerformance` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
 | `POST` | `/api/settings/password` | logged in + CSRF | `AccountApiController::changePassword` | 200, 400 `invalid_json`, 401 `unauthenticated`, 403 `csrf_failed`, 422 `validation_failed`, 500 `internal_error` |
 | `POST` | `/api/settings/avatar` | logged in + CSRF | `AccountApiController::uploadAvatar` | 200, 401 `unauthenticated`, 403 `csrf_failed`, 422 `avatar_missing` / `avatar_invalid_type` / `avatar_too_large` / `avatar_invalid_image` / `avatar_dimensions_too_large` / `avatar_upload_failed` / `avatar_processing_failed`, 500 `internal_error` |
 | `POST` | `/api/settings/avatar/delete` | logged in + CSRF | `AccountApiController::deleteAvatar` | 200, 401 `unauthenticated`, 403 `csrf_failed`, 409 `avatar_not_found`, 500 `internal_error` |
@@ -379,7 +385,7 @@ After changing weights, verify the total: `SELECT code, drop_weight FROM raritie
 
 ### Pack opening settings
 
-Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsRepository::find()` returns the defaults when no row exists (`auto`, `queue`, sound on, volume `70`, visibility `public`); saving is an UPSERT. The defaults in PHP match the column defaults and `CHECK` constraints in the migration files.
+Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsRepository::find()` returns the defaults when no row exists (`auto`, `queue`, sound on, volume `70`, visibility `public`, lite mode off); saving is an UPSERT. The defaults in PHP match the column defaults and `CHECK` constraints in the migration files.
 
 | Column | Values | Default | Effect |
 |---|---|---|---|
@@ -388,22 +394,25 @@ Settings are per user in `user_settings` (`user_id` primary key). `UserSettingsR
 | `sound_enabled` | boolean | `true` | Passed to the sound module |
 | `sound_volume` | `0..100` | `70` | Passed to the sound module |
 | `collection_visibility` | `public`, `private` | `public` | Controls whether other users can see the card list on `/users/{id}` and `/api/users/{id}/collection` |
+| `lite_mode` | boolean | `false` | Enables lite mode: disables glows, animations and transitions, and uses a page size of 12 instead of 24 |
 
-The pack opening values are managed on the pack opening settings page (`/settings/packs`) and saved through `POST /api/settings/packs`; the opening flow reads them via `GET /api/settings/packs` at the start of `/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored. The `collection_visibility` value is managed on `/settings/privacy` through `GET` and `POST /api/settings/privacy`, and is enforced by `GET /api/users/{id}/collection`.
+The pack opening values are managed on the pack opening settings page (`/settings/packs`) and saved through `POST /api/settings/packs`; the opening flow reads them via `GET /api/settings/packs` at the start of `/packs`. The sound module (`public/js/sound.js`) is currently a placeholder whose `configure()` and `play()` functions do nothing, so no audio is synthesized yet even though the settings are stored. The `collection_visibility` value is managed on `/settings/privacy` through `GET` and `POST /api/settings/privacy`, and is enforced by `GET /api/users/{id}/collection`. The `lite_mode` value is managed on `/settings/performance` through `GET` and `POST /api/settings/performance`.
 
-The `collection_visibility` column is added by `database/10-privacy.sql`. A fresh database volume applies it automatically; an existing database needs the migration run manually:
+The `collection_visibility` column is added by `database/10-privacy.sql` and `lite_mode` by `database/11-lite-mode.sql`. A fresh database volume applies them automatically; an existing database needs the migrations run manually:
 
 ```bash
 docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB' < database/10-privacy.sql
+docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB' < database/11-lite-mode.sql
 ```
 
 On PowerShell:
 
 ```powershell
 Get-Content database\10-privacy.sql | docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
+Get-Content database\11-lite-mode.sql | docker compose exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
 ```
 
-With `prefers-reduced-motion: reduce`, the CSS disables the reveal/tear transitions and burst animations; in auto mode the stage reveals the remaining cards immediately instead of animating them.
+With `prefers-reduced-motion: reduce` or lite mode, the CSS disables the reveal/tear transitions and burst animations; in auto mode the stage reveals the remaining cards immediately instead of animating them. Lite mode adds the `is-lite` class to `<html>`, which turns off glows, blur, animations and transitions and replaces rarity glows with 2px rarity-coloured borders. It also shrinks server-side page sizes: collections return 12 items instead of 24 for the logged-in viewer, and the pack history uses 12 instead of 10 both on the initial render and on `Load more`.
 
 ### Fetch API and JSON API
 
@@ -514,6 +523,7 @@ erDiagram
         boolean sound_enabled
         smallint sound_volume
         varchar collection_visibility
+        boolean lite_mode
         timestamptz updated_at
     }
     pack_openings {
@@ -594,19 +604,21 @@ Defined in `database/02-views.sql` and extended by `database/06-leaderboard-pack
 | `GET /admin` | `AdminController::index` | `LogRepository::latest(50)` | `SELECT l.id, l.level, l.message, u.username, l.created_at FROM system_logs l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.created_at DESC, l.id DESC LIMIT :limit` |
 | `GET /admin` | `AdminController::index` | `RarityRepository::all()` | Rarity query |
 | Error 500 | `public/index.php` catch | `LogRepository::add()` | `INSERT INTO system_logs (level, message, context, user_id) VALUES (:level, :message, CAST(:context AS JSONB), :user_id)` |
-| `GET /packs` | `PackController::index` | `PackRepository::settings()`, `UserSettingsRepository::find(int)`, `RarityRepository::odds()`, `PackRepository::historyByUser(int, int, int)` | `SELECT cards_per_pack, cost_points, max_bulk_packs, max_purchase_packs FROM pack_settings WHERE id = 1`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility FROM user_settings WHERE user_id = :user_id`; `SELECT r.code, r.name, r.drop_weight, COUNT(c.id) AS card_count FROM rarities r LEFT JOIN cards c ON c.rarity_id = r.id GROUP BY r.id ORDER BY r.sort_order`; history queries below |
+| `GET /packs` | `PackController::index` | `PackRepository::settings()`, `UserSettingsRepository::find(int)`, `RarityRepository::odds()`, `PackRepository::historyByUser(int, int, int)` | `SELECT cards_per_pack, cost_points, max_bulk_packs, max_purchase_packs FROM pack_settings WHERE id = 1`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility, lite_mode FROM user_settings WHERE user_id = :user_id`; `SELECT r.code, r.name, r.drop_weight, COUNT(c.id) AS card_count FROM rarities r LEFT JOIN cards c ON c.rarity_id = r.id GROUP BY r.id ORDER BY r.sort_order`; history queries below |
 | `GET /packs/{id}` | `PackController::show` | `PackRepository::findOpening(int)`, `RarityRepository::odds()` | `SELECT po.id AS opening_id, po.user_id, po.opened_at, poc.slot, poc.is_new, c..., r.code AS rarity_code, r.name AS rarity_name FROM pack_openings po LEFT JOIN pack_opening_cards poc ON poc.opening_id = po.id LEFT JOIN cards c ON c.id = poc.card_id LEFT JOIN rarities r ON r.id = c.rarity_id WHERE po.id = :id ORDER BY poc.slot`; odds query above |
 | `POST /api/packs/buy` | `PackApiController::buy` | `PackRepository::buy(int, int)` | `SELECT points, unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET points = points - :total, unopened_packs = unopened_packs + :quantity WHERE id = :id`; `INSERT INTO pack_purchases (user_id, quantity, points_spent) VALUES (:user_id, :quantity, :points_spent)`; `LogRepository::add()` |
 | `POST /api/packs/open` | `PackApiController::open` | `PackRepository::openFromStock(int, int)`, `PackRepository::findOpeningsByIds(int, array)`, `UserRepository::findById(int)` | `SELECT unopened_packs FROM users WHERE id = :id FOR UPDATE`; `UPDATE users SET unopened_packs = unopened_packs - :count WHERE id = :id`; `INSERT INTO pack_openings (user_id) VALUES (:user_id) RETURNING id`; `INSERT INTO user_cards (user_id, card_id) VALUES (...) ON CONFLICT (user_id, card_id) DO UPDATE SET quantity = user_cards.quantity + 1 RETURNING quantity`; `INSERT INTO pack_opening_cards (opening_id, slot, card_id, is_new) VALUES (...)`; openings query with `po.user_id = :user_id AND po.id IN (...)`; `SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users WHERE id = :id` |
-| `POST /api/settings/packs` | `PackApiController::saveSettings` | `UserSettingsRepository::save(int, UserSettings)` | `INSERT INTO user_settings (user_id, reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...` |
-| `GET /api/settings/privacy` | `AccountApiController::getPrivacy` | `UserSettingsRepository::find(int)` | `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility FROM user_settings WHERE user_id = :user_id` |
+| `POST /api/settings/packs` | `PackApiController::saveSettings` | `UserSettingsRepository::save(int, UserSettings)` | `INSERT INTO user_settings (user_id, reveal_mode, multi_open_mode, sound_enabled, sound_volume, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET reveal_mode, multi_open_mode, sound_enabled, sound_volume, updated_at` |
+| `GET /api/settings/privacy` | `AccountApiController::getPrivacy` | `UserSettingsRepository::find(int)` | `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility, lite_mode FROM user_settings WHERE user_id = :user_id` |
 | `POST /api/settings/privacy` | `AccountApiController::savePrivacy` | `UserSettingsRepository::find(int)`, `UserSettingsRepository::saveCollectionVisibility(int, string)`, `LogRepository::add()` | `SELECT ... FROM user_settings WHERE user_id = :user_id`; `INSERT INTO user_settings (user_id, collection_visibility, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...`; `INSERT INTO system_logs ...` |
+| `GET /api/settings/performance` | `AccountApiController::getPerformance` | `UserSettingsRepository::find(int)` | `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility, lite_mode FROM user_settings WHERE user_id = :user_id` |
+| `POST /api/settings/performance` | `AccountApiController::savePerformance` | `UserSettingsRepository::find(int)`, `UserSettingsRepository::saveLiteMode(int, bool)`, `LogRepository::add()` | `SELECT ... FROM user_settings WHERE user_id = :user_id`; `INSERT INTO user_settings (user_id, lite_mode, updated_at) VALUES (...) ON CONFLICT (user_id) DO UPDATE SET ...`; `INSERT INTO system_logs ...` |
 | `POST /api/settings/password` | `AccountApiController::changePassword` | `UserRepository::findPasswordHashById(int)`, `UserRepository::updatePasswordHash(int, string)`, `LogRepository::add()` | `SELECT password_hash FROM users WHERE id = :id`; `UPDATE users SET password_hash = :password_hash WHERE id = :id`; `INSERT INTO system_logs ...` |
 | `POST /api/settings/avatar` | `AccountApiController::uploadAvatar` | `AvatarProcessor::process(string, int, int)`, `UserRepository::updateAvatarPath(int, ?string)`, `LogRepository::add()` | `UPDATE users SET avatar_path = :avatar_path WHERE id = :id`; `INSERT INTO system_logs ...` |
 | `POST /api/settings/avatar/delete` | `AccountApiController::deleteAvatar` | `UserRepository::updateAvatarPath(int, ?string)`, `LogRepository::add()` | `UPDATE users SET avatar_path = :avatar_path WHERE id = :id`; `INSERT INTO system_logs ...` |
 | `POST /api/settings/kick/disconnect` | `AccountApiController::disconnectKick` | `KickAccountRepository::findByUserId(int)`, `UserRepository::findPasswordHashById(int)`, `KickAccountRepository::unlink(int)`, `LogRepository::add()` | `SELECT user_id, kick_user_id, kick_username, linked_at FROM kick_accounts WHERE user_id = :user_id`; `SELECT password_hash FROM users WHERE id = :id`; `DELETE FROM kick_accounts WHERE user_id = :user_id`; `INSERT INTO system_logs ...` |
 | `GET /api/packs/history` | `PackApiController::history` | `PackRepository::historyByUser(int, int, int)` | `SELECT id FROM pack_openings WHERE user_id = :user_id ORDER BY opened_at DESC, id DESC OFFSET :offset LIMIT :limit`; `SELECT ... FROM pack_openings po LEFT JOIN ... WHERE po.user_id = :user_id AND po.id IN (...) ORDER BY po.id, poc.slot` |
-| `GET /api/users/{id}/collection` | `CollectionApiController::userCollection` | `UserRepository::findById(int)`, `UserSettingsRepository::find(int)`, `CollectionRepository::collectionPage(...)`, `CollectionRepository::collectionSummary(int)`, `RarityRepository::all()` | `SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users WHERE id = :id`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility FROM user_settings WHERE user_id = :user_id`; collection page query with `uc.user_id = :user_id`; summary queries; rarity query |
+| `GET /api/users/{id}/collection` | `CollectionApiController::userCollection` | `UserRepository::findById(int)`, `UserSettingsRepository::find(int)`, `CollectionRepository::collectionPage(...)`, `CollectionRepository::collectionSummary(int)`, `RarityRepository::all()` | `SELECT id, username, email, role, points, unopened_packs, avatar_path, created_at FROM users WHERE id = :id`; `SELECT reveal_mode, multi_open_mode, sound_enabled, sound_volume, collection_visibility, lite_mode FROM user_settings WHERE user_id = :user_id`; collection page query with `uc.user_id = :user_id`; summary queries; rarity query |
 | `POST /admin/users/{id}/points` | `AdminController::grantPoints` | `UserRepository::addPoints(int, int)`, `LogRepository::add()` | `UPDATE users SET points = points + :amount WHERE id = :id`, `INSERT INTO system_logs ...` |
 
 ### Configuration
